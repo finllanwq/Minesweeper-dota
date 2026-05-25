@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Сапёр × Дота</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;600&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --gold: #c9a84c;
+      --gold-light: #f0d080;
+      --gold-dim: #7a6030;
+      --red: #c0392b;
+      --red-glow: #ff4444;
+      --bg-dark: #080a0e;
+      --bg-panel: #0d1117;
+      --bg-card: #111820;
+      --border: #1e2d40;
+      --border-gold: #3a2e10;
+      --text: #c8d8e8;
+      --text-dim: #5a7090;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg-dark);
+      color: var(--text);
+      font-family: 'Rajdhani', sans-serif;
+      overflow: hidden;
+    }
+
+    /* ── ФОНОВАЯ СЕТКА МИН ── */
+    .grid-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      display: grid;
+      grid-template-columns: repeat(28, 1fr);
+      grid-template-rows: repeat(18, 1fr);
+      opacity: 0.07;
+      pointer-events: none;
+    }
+    .grid-cell {
+      border: 1px solid #2244aa;
+      position: relative;
+      transition: background 0.4s;
+    }
+    .grid-cell.mine::after {
+      content: '💣';
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(8px, 1.2vw, 14px);
+      opacity: 0.6;
+    }
+    .grid-cell.num::after {
+      content: attr(data-n);
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(6px, 1vw, 12px);
+      font-weight: 700;
+      color: #4488ff;
+    }
+
+    /* ── ЧАСТИЦЫ ── */
+    .particles {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .particle {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      background: var(--gold);
+      border-radius: 50%;
+      animation: float linear infinite;
+      opacity: 0;
+    }
+    @keyframes float {
+      0% { transform: translateY(100vh) translateX(0); opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 0.6; }
+      100% { transform: translateY(-10vh) translateX(var(--drift)); opacity: 0; }
+    }
+
+    /* ── СВЕЧЕНИЕ ФОНА ── */
+    .glow-orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(80px);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .glow-orb.left { width: 500px; height: 500px; background: radial-gradient(circle, rgba(180,100,20,0.12), transparent 70%); top: 20%; left: -10%; }
+    .glow-orb.right { width: 400px; height: 400px; background: radial-gradient(circle, rgba(30,80,200,0.1), transparent 70%); bottom: 10%; right: -5%; }
+
+    /* ── ОСНОВНОЙ КОНТЕЙНЕР ── */
+    .page {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 32px;
+      width: 100%;
+      max-width: 460px;
+      animation: fadeIn 0.8s ease forwards;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── ЛОГО ── */
+    .logo {
+      text-align: center;
+      position: relative;
+    }
+    .logo-icon {
+      font-size: 48px;
+      display: block;
+      margin-bottom: 8px;
+      filter: drop-shadow(0 0 20px rgba(201,168,76,0.6));
+      animation: pulse 3s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { filter: drop-shadow(0 0 20px rgba(201,168,76,0.6)); }
+      50% { filter: drop-shadow(0 0 35px rgba(201,168,76,0.9)); }
+    }
+    .logo h1 {
+      font-family: 'Cinzel Decorative', serif;
+      font-size: clamp(18px, 4vw, 26px);
+      font-weight: 900;
+      letter-spacing: 3px;
+      background: linear-gradient(135deg, #f0d080, #c9a84c, #f0d080);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: none;
+      line-height: 1.2;
+    }
+    .logo-sub {
+      font-family: 'Cinzel', serif;
+      font-size: 11px;
+      letter-spacing: 6px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      margin-top: 6px;
+    }
+    .logo-line {
+      width: 80px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      margin: 12px auto 0;
+    }
+
+    /* ── КАРТОЧКА ── */
+    .card {
+      width: 100%;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    }
+    .card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(201,168,76,0.03) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    /* ── ТАБЫ ── */
+    .tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border-bottom: 1px solid var(--border);
+    }
+    .tab {
+      padding: 16px;
+      text-align: center;
+      font-family: 'Cinzel', serif;
+      font-size: 12px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      cursor: pointer;
+      transition: all 0.3s;
+      position: relative;
+      background: none;
+      border: none;
+      outline: none;
+    }
+    .tab:hover { color: var(--gold); }
+    .tab.active {
+      color: var(--gold-light);
+      background: rgba(201,168,76,0.05);
+    }
+    .tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: -1px; left: 20%; right: 20%;
+      height: 2px;
+      background: var(--gold);
+      box-shadow: 0 0 8px var(--gold);
+    }
+
+    /* ── ФОРМЫ ── */
+    .forms { padding: 32px; }
+
+    .form-panel { display: none; }
+    .form-panel.active {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      animation: slideIn 0.3s ease;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(10px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+    .field label {
+      font-family: 'Cinzel', serif;
+      font-size: 10px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+    .field-wrap {
+      position: relative;
+    }
+    .field-wrap .icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 14px;
+      pointer-events: none;
+      opacity: 0.5;
+    }
+    .field input {
+      width: 100%;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 15px;
+      font-weight: 400;
+      padding: 12px 14px 12px 40px;
+      outline: none;
+      transition: all 0.3s;
+      letter-spacing: 0.5px;
+    }
+    .field input::placeholder { color: var(--text-dim); opacity: 0.6; }
+    .field input:focus {
+      border-color: var(--gold-dim);
+      background: rgba(201,168,76,0.04);
+      box-shadow: 0 0 0 3px rgba(201,168,76,0.07), inset 0 0 20px rgba(201,168,76,0.02);
+    }
+
+    /* ── КНОПКА ── */
+    .btn {
+      position: relative;
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #1a1200, #2a1e00);
+      border: 1px solid var(--gold-dim);
+      color: var(--gold-light);
+      font-family: 'Cinzel', serif;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      cursor: pointer;
+      overflow: hidden;
+      transition: all 0.3s;
+      margin-top: 6px;
+    }
+    .btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(201,168,76,0.15), transparent);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .btn:hover {
+      border-color: var(--gold);
+      color: var(--gold-light);
+      box-shadow: 0 0 20px rgba(201,168,76,0.2), inset 0 0 20px rgba(201,168,76,0.05);
+    }
+    .btn:hover::before { opacity: 1; }
+    .btn:active { transform: scale(0.99); }
+    .btn.loading { pointer-events: none; opacity: 0.6; }
+    .btn .btn-text { position: relative; z-index: 1; }
+
+    /* ── СООБЩЕНИЕ ОБ ОШИБКЕ / УСПЕХЕ ── */
+    .message {
+      padding: 10px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      border-left: 3px solid;
+      display: none;
+    }
+    .message.error {
+      background: rgba(192,57,43,0.1);
+      border-color: var(--red);
+      color: #ff6b6b;
+      display: block;
+    }
+    .message.success {
+      background: rgba(39,174,96,0.1);
+      border-color: #27ae60;
+      color: #5dea8a;
+      display: block;
+    }
+
+    /* ── РАЗДЕЛИТЕЛЬ ── */
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--text-dim);
+      font-size: 11px;
+      letter-spacing: 2px;
+    }
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ── НИЖНЯЯ ЧАСТЬ КАРТОЧКИ ── */
+    .card-footer {
+      padding: 16px 32px;
+      border-top: 1px solid var(--border);
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-dim);
+      background: rgba(0,0,0,0.2);
+    }
+    .card-footer span { color: var(--gold-dim); margin: 0 4px; }
+
+    /* ── ПРОФИЛЬ (после входа) ── */
+    .profile-screen {
+      display: none;
+      width: 100%;
+      max-width: 460px;
+      animation: fadeIn 0.5s ease forwards;
+    }
+    .profile-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+    .profile-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    }
+    .profile-header {
+      padding: 28px 32px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .avatar {
+      width: 64px;
+      height: 64px;
+      background: linear-gradient(135deg, #1a1200, #2a1e00);
+      border: 2px solid var(--gold-dim);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      flex-shrink: 0;
+    }
+    .profile-info h2 {
+      font-family: 'Cinzel', serif;
+      font-size: 18px;
+      color: var(--gold-light);
+      letter-spacing: 2px;
+    }
+    .profile-info p {
+      font-size: 12px;
+      color: var(--text-dim);
+      margin-top: 4px;
+      letter-spacing: 1px;
+    }
+    .profile-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0;
+    }
+    .stat {
+      padding: 20px;
+      text-align: center;
+      border-right: 1px solid var(--border);
+    }
+    .stat:last-child { border-right: none; }
+    .stat-val {
+      font-family: 'Cinzel Decorative', serif;
+      font-size: 22px;
+      color: var(--gold);
+      display: block;
+    }
+    .stat-label {
+      font-size: 10px;
+      color: var(--text-dim);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-top: 4px;
+      display: block;
+    }
+    .profile-actions {
+      padding: 20px 32px;
+      display: flex;
+      gap: 12px;
+    }
+    .btn-secondary {
+      flex: 1;
+      padding: 12px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      font-family: 'Cinzel', serif;
+      font-size: 10px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .btn-secondary:hover {
+      border-color: var(--text-dim);
+      color: var(--text);
+    }
+    .btn-logout {
+      flex: 1;
+      padding: 12px;
+      background: rgba(192,57,43,0.1);
+      border: 1px solid rgba(192,57,43,0.3);
+      color: #ff6b6b;
+      font-family: 'Cinzel', serif;
+      font-size: 10px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .btn-logout:hover {
+      background: rgba(192,57,43,0.2);
+      border-color: var(--red);
+    }
+
+    /* ── ДЕКОРАТИВНЫЕ УГЛЫ ── */
+    .corner {
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      border-color: var(--gold-dim);
+      border-style: solid;
+      opacity: 0.6;
+    }
+    .corner.tl { top: 6px; left: 6px; border-width: 1px 0 0 1px; }
+    .corner.tr { top: 6px; right: 6px; border-width: 1px 1px 0 0; }
+    .corner.bl { bottom: 6px; left: 6px; border-width: 0 0 1px 1px; }
+    .corner.br { bottom: 6px; right: 6px; border-width: 0 1px 1px 0; }
+  </style>
+</head>
+<body>
+
+<!-- Фоновая сетка -->
+<div class="grid-bg" id="gridBg"></div>
+
+<!-- Частицы -->
+<div class="particles" id="particles"></div>
+
+<!-- Свечение -->
+<div class="glow-orb left"></div>
+<div class="glow-orb right"></div>
+
+<div class="page">
+
+  <!-- ── ФОРМА ВХОДА / РЕГИСТРАЦИИ ── -->
+  <div class="wrapper" id="authWrapper">
+    <div class="logo">
+      <span class="logo-icon">💣</span>
+      <h1>Сапёр × Дота</h1>
+      <p class="logo-sub">Tactical Minesweeper</p>
+      <div class="logo-line"></div>
+    </div>
+
+    <div class="card">
+      <div class="corner tl"></div>
+      <div class="corner tr"></div>
+      <div class="corner bl"></div>
+      <div class="corner br"></div>
+
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab('login')">Войти</button>
+        <button class="tab" onclick="switchTab('register')">Создать аккаунт</button>
+      </div>
+
+      <div class="forms">
+
+        <!-- ВХОД -->
+        <div class="form-panel active" id="loginForm">
+          <div id="loginMsg" class="message"></div>
+
+          <div class="field">
+            <label>Логин</label>
+            <div class="field-wrap">
+              <span class="icon">⚔️</span>
+              <input type="text" id="loginUsername" placeholder="Введи логин" autocomplete="username">
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Пароль</label>
+            <div class="field-wrap">
+              <span class="icon">🔑</span>
+              <input type="password" id="loginPassword" placeholder="Введи пароль" autocomplete="current-password">
+            </div>
+          </div>
+
+          <button class="btn" id="loginBtn" onclick="login()">
+            <span class="btn-text">Войти в игру</span>
+          </button>
+        </div>
+
+        <!-- РЕГИСТРАЦИЯ -->
+        <div class="form-panel" id="registerForm">
+          <div id="registerMsg" class="message"></div>
+
+          <div class="field">
+            <label>Логин</label>
+            <div class="field-wrap">
+              <span class="icon">⚔️</span>
+              <input type="text" id="regUsername" placeholder="Придумай логин" autocomplete="username">
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Email</label>
+            <div class="field-wrap">
+              <span class="icon">📜</span>
+              <input type="email" id="regEmail" placeholder="Введи email" autocomplete="email">
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Пароль</label>
+            <div class="field-wrap">
+              <span class="icon">🔑</span>
+              <input type="password" id="regPassword" placeholder="Придумай пароль" autocomplete="new-password">
+            </div>
+          </div>
+
+          <div class="divider">герой рождается</div>
+
+          <button class="btn" id="registerBtn" onclick="register()">
+            <span class="btn-text">Начать путь</span>
+          </button>
+        </div>
+
+      </div>
+
+      <div class="card-footer">
+        Tactical Minesweeper <span>×</span> Dota Heroes
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ПРОФИЛЬ ПОСЛЕ ВХОДА ── -->
+  <div class="profile-screen" id="profileScreen">
+    <div class="logo" style="margin-bottom: 24px; text-align:center;">
+      <span class="logo-icon">💣</span>
+      <h1 style="font-family:'Cinzel Decorative',serif;font-size:22px;background:linear-gradient(135deg,#f0d080,#c9a84c,#f0d080);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Сапёр × Дота</h1>
+    </div>
+
+    <div class="profile-card">
+      <div class="corner tl"></div>
+      <div class="corner tr"></div>
+      <div class="corner bl"></div>
+      <div class="corner br"></div>
+
+      <div class="profile-header">
+        <div class="avatar">🧙</div>
+        <div class="profile-info">
+          <h2 id="profileName">—</h2>
+          <p id="profileRank">Herald • MMR 0</p>
+        </div>
+      </div>
+
+      <div class="profile-stats">
+        <div class="stat">
+          <span class="stat-val" id="statWins">0</span>
+          <span class="stat-label">Победы</span>
+        </div>
+        <div class="stat">
+          <span class="stat-val" id="statLosses">0</span>
+          <span class="stat-label">Поражения</span>
+        </div>
+        <div class="stat">
+          <span class="stat-val" id="statLevel">1</span>
+          <span class="stat-label">Уровень</span>
+        </div>
+      </div>
+
+      <div class="profile-actions">
+        <button class="btn-secondary">🗡 Играть</button>
+        <button class="btn-secondary">🏆 Рейтинг</button>
+        <button class="btn-logout" onclick="logout()">Выйти</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ── ГЕНЕРАЦИЯ ФОНОВОЙ СЕТКИ ──
+  const grid = document.getElementById('gridBg');
+  for (let i = 0; i < 28 * 18; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'grid-cell';
+    const r = Math.random();
+    if (r < 0.04) { cell.classList.add('mine'); }
+    else if (r < 0.12) { cell.classList.add('num'); cell.dataset.n = Math.ceil(Math.random() * 8); }
+    grid.appendChild(cell);
+  }
+
+  // ── ГЕНЕРАЦИЯ ЧАСТИЦ ──
+  const pContainer = document.getElementById('particles');
+  for (let i = 0; i < 25; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.cssText = `
+      left: ${Math.random() * 100}%;
+      width: ${Math.random() * 3 + 1}px;
+      height: ${Math.random() * 3 + 1}px;
+      animation-duration: ${Math.random() * 15 + 10}s;
+      animation-delay: ${Math.random() * 10}s;
+      --drift: ${(Math.random() - 0.5) * 100}px;
+      opacity: 0;
+    `;
+    pContainer.appendChild(p);
+  }
+
+  // ── ПЕРЕКЛЮЧЕНИЕ ТАБОВ ──
+  function switchTab(tab) {
+    document.querySelectorAll('.tab').forEach((t, i) => {
+      t.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'register'));
+    });
+    document.getElementById('loginForm').classList.toggle('active', tab === 'login');
+    document.getElementById('registerForm').classList.toggle('active', tab === 'register');
+    clearMessages();
+  }
+
+  function clearMessages() {
+    ['loginMsg', 'registerMsg'].forEach(id => {
+      const el = document.getElementById(id);
+      el.className = 'message';
+      el.textContent = '';
+    });
+  }
+
+  function showMsg(id, text, type) {
+    const el = document.getElementById(id);
+    el.textContent = text;
+    el.className = `message ${type}`;
+  }
+
+  function setLoading(btnId, loading) {
+    const btn = document.getElementById(btnId);
+    btn.classList.toggle('loading', loading);
+    btn.querySelector('.btn-text').textContent = loading ? '...' :
+      (btnId === 'loginBtn' ? 'Войти в игру' : 'Начать путь');
+  }
+
+  // ── ВХОД ──
+  async function login() {
+    const username = document.getElementById('loginUsername').value.trim();
+    const password = document.getElementById('loginPassword').value;
+
+    if (!username || !password) return showMsg('loginMsg', 'Заполни все поля', 'error');
+
+    setLoading('loginBtn', true);
+    try {
+      const res = await fetch('/api/users/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        showMsg('loginMsg', data.error || 'Ошибка входа', 'error');
+      } else {
+        showMsg('loginMsg', '✓ Добро пожаловать!', 'success');
+        setTimeout(loadProfile, 800);
+      }
+    } catch {
+      showMsg('loginMsg', 'Сервер недоступен', 'error');
+    }
+    setLoading('loginBtn', false);
+  }
+
+  // ── РЕГИСТРАЦИЯ ──
+  async function register() {
+    const username = document.getElementById('regUsername').value.trim();
+    const email = document.getElementById('regEmail').value.trim();
+    const password = document.getElementById('regPassword').value;
+
+    if (!username || !email || !password) return showMsg('registerMsg', 'Заполни все поля', 'error');
+    if (password.length < 6) return showMsg('registerMsg', 'Пароль минимум 6 символов', 'error');
+
+    setLoading('registerBtn', true);
+    try {
+      const res = await fetch('/api/users/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, email, password })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        showMsg('registerMsg', data.error || 'Ошибка регистрации', 'error');
+      } else {
+        showMsg('registerMsg', '✓ Аккаунт создан! Входим...', 'success');
+        // Автовход после регистрации
+        setTimeout(async () => {
+          await fetch('/api/users/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+          });
+          loadProfile();
+        }, 1000);
+      }
+    } catch {
+      showMsg('registerMsg', 'Сервер недоступен', 'error');
+    }
+    setLoading('registerBtn', false);
+  }
+
+  // ── ЗАГРУЗКА ПРОФИЛЯ ──
+  async function loadProfile() {
+    try {
+      const res = await fetch('/api/users/me');
+      if (!res.ok) return;
+      const user = await res.json();
+
+      document.getElementById('profileName').textContent = user.username;
+      document.getElementById('profileRank').textContent =
+        `${user.rank_name || 'Herald'} • MMR ${user.mmr || 0}`;
+      document.getElementById('statWins').textContent = user.wins || 0;
+      document.getElementById('statLosses').textContent = user.losses || 0;
+      document.getElementById('statLevel').textContent = user.level || 1;
+
+      document.getElementById('authWrapper').style.display = 'none';
+      document.getElementById('profileScreen').style.display = 'block';
+    } catch {}
+  }
+
+  // ── ВЫХОД ──
+  async function logout() {
+    await fetch('/api/users/logout', { method: 'POST' });
+    document.getElementById('profileScreen').style.display = 'none';
+    document.getElementById('authWrapper').style.display = 'flex';
+    clearMessages();
+  }
+
+  // ── ENTER ДЛЯ ФОРМ ──
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    if (document.getElementById('loginForm').classList.contains('active')) login();
+    else register();
+  });
+
+  // ── ПРОВЕРКА СЕССИИ ПРИ ЗАГРУЗКЕ ──
+  loadProfile();
+</script>
+</body>
+</html>
