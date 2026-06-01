@@ -107,19 +107,20 @@
 
     /* Поле */
     .board-wrap { position:relative; overflow:auto; max-width:100%; max-height:70vh; border:1px solid var(--border); background:rgba(0,0,0,.3); }
+    .board-wrap.fullwidth { max-width:calc(100vw - 32px); }
     .board { display:inline-grid; gap:1px; padding:4px; background:var(--border); }
     .cell {
       width: var(--cell-size); height: var(--cell-size);
-      background: #1a2535; border: 1px solid #2a3a50;
+      background: #2e4060; border: 1px solid #4a6080;
       display:flex; align-items:center; justify-content:center;
       font-size:13px; font-weight:700; cursor:pointer;
       transition:background .15s, transform .1s;
       user-select:none; font-family:'Rajdhani',sans-serif;
       position: relative;
     }
-    .cell:hover:not(.open):not(.exploded) { background:#243040; transform:scale(1.05); z-index:1; }
+    .cell:hover:not(.open):not(.exploded) { background:#3a5070; transform:scale(1.05); z-index:1; }
     .cell.open { background:#0d1520; cursor:default; border-color:#1a2535; }
-    .cell.flagged { background:#1a2010; border-color:#3a5010; }
+    .cell.flagged { background:#2a3a10; border-color:#4a6010; }
     .cell.exploded { background:#3a0a0a !important; border-color:#aa2020 !important; animation:boom .3s ease; }
     @keyframes boom { 0%{transform:scale(1.4)} 100%{transform:scale(1)} }
     .cell.reveal-anim { animation:reveal .2s ease; }
@@ -232,16 +233,16 @@
   </div>
 
   <div class="stage-bar">
-    <div class="stage-item active" id="stage1">Этап 1 — 20×20</div>
-    <div class="stage-item" id="stage2">Этап 2 — 50×50</div>
-    <div class="stage-item" id="stage3">Этап 3 — 100×100</div>
+    <div class="stage-item active" id="stage1">Этап 1 — 9×9</div>
+    <div class="stage-item" id="stage2">Этап 2 — 20×20</div>
+    <div class="stage-item" id="stage3">Этап 3 — 50×20</div>
   </div>
 
   <div class="board-wrap" id="boardWrap">
     <div class="board" id="board"></div>
   </div>
 
-  <p class="hint">ЛКМ — открыть клетку &nbsp;|&nbsp; ПКМ — поставить флаг 🚩</p>
+  <p class="hint">ЛКМ — открыть &nbsp;|&nbsp; ПКМ — флаг 🚩 &nbsp;|&nbsp; ЛКМ по цифре — открыть соседей &nbsp;|&nbsp; ПКМ по цифре — поставить флаги</p>
 
 </div>
 
@@ -339,9 +340,9 @@ let seconds      = 0;
 let stagesDone   = [false,false,false];
 
 const STAGES = [
-  { rows:20, cols:20, mines:50  },   // Этап 1
-  { rows:50, cols:50, mines:300 },   // Этап 2
-  { rows:100,cols:100,mines:1200},   // Этап 3
+  { rows:9,  cols:9,  mines:10 },   // Этап 1
+  { rows:20, cols:20, mines:50 },   // Этап 2
+  { rows:20, cols:50, mines:130},   // Этап 3
 ];
 
 function startStage(stageNum) {
@@ -358,8 +359,11 @@ function startStage(stageNum) {
   }
 
   // Обновить CSS переменную размера клетки
-  const size = stageNum===1?28: stageNum===2?16:9;
+  const size = stageNum===1?44: stageNum===2?28:20;
   document.documentElement.style.setProperty('--cell-size', size+'px');
+  const wrap = document.getElementById('boardWrap');
+  if(stageNum===3) wrap.classList.add('fullwidth');
+  else wrap.classList.remove('fullwidth');
 
   initBoard();
   renderBoard();
@@ -426,21 +430,38 @@ function getCell(r,c) {
 function onLeftClick(e) {
   if(gameOver) return;
   const r=+e.target.dataset.r, c=+e.target.dataset.c;
-  if(flagged[r][c]||revealed[r][c]) return;
+  if(flagged[r][c]) return;
 
   if(firstClick) {
     firstClick=false;
     placeMines(r,c);
     startTimer();
   }
-  openCell(r,c);
-  checkWin();
+
+  // Если клетка уже открыта и это цифра — открыть соседей (chord)
+  if(revealed[r][c] && board[r][c]>0) {
+    chordOpen(r,c);
+    checkWin();
+    return;
+  }
+
+  if(!revealed[r][c]) {
+    openCell(r,c);
+    checkWin();
+  }
 }
 
 function onRightClick(e) {
   e.preventDefault();
   if(gameOver) return;
   const r=+e.target.dataset.r, c=+e.target.dataset.c;
+
+  // Если клетка уже открыта и это цифра — поставить флаги на соседей (chord flag)
+  if(revealed[r][c] && board[r][c]>0) {
+    chordFlag(r,c);
+    return;
+  }
+
   if(revealed[r][c]) return;
   flagged[r][c] = !flagged[r][c];
   const cell = getCell(r,c);
@@ -448,6 +469,45 @@ function onRightClick(e) {
   cell.classList.toggle('flagged', flagged[r][c]);
   const flags = flagged.flat().filter(Boolean).length;
   document.getElementById('hudFlags').textContent = flags;
+}
+
+// Открыть всех соседей цифры (если флагов вокруг столько же сколько цифра)
+function chordOpen(r,c) {
+  const num = board[r][c];
+  let flagCount = 0;
+  const neighbors = [];
+  for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++) {
+    if(dr===0&&dc===0) continue;
+    const nr=r+dr, nc=c+dc;
+    if(nr<0||nr>=rows||nc<0||nc>=cols) continue;
+    if(flagged[nr][nc]) flagCount++;
+    else if(!revealed[nr][nc]) neighbors.push([nr,nc]);
+  }
+  if(flagCount===num) {
+    neighbors.forEach(([nr,nc])=>openCell(nr,nc));
+  }
+}
+
+// Поставить флаги на всех закрытых соседей цифры (если их столько же сколько цифра)
+function chordFlag(r,c) {
+  const num = board[r][c];
+  const closed = [];
+  for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++) {
+    if(dr===0&&dc===0) continue;
+    const nr=r+dr, nc=c+dc;
+    if(nr<0||nr>=rows||nc<0||nc>=cols) continue;
+    if(!revealed[nr][nc]&&!flagged[nr][nc]) closed.push([nr,nc]);
+  }
+  if(closed.length===num) {
+    closed.forEach(([nr,nc])=>{
+      flagged[nr][nc]=true;
+      const cell=getCell(nr,nc);
+      cell.textContent='🚩';
+      cell.classList.add('flagged');
+    });
+    const flags=flagged.flat().filter(Boolean).length;
+    document.getElementById('hudFlags').textContent=flags;
+  }
 }
 
 function openCell(r,c) {
