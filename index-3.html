@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Сапёр × Дота</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;600&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --gold: #c9a84c; --gold-light: #f0d080; --gold-dim: #7a6030;
+      --red: #c0392b; --bg-dark: #080a0e; --bg-card: #111820;
+      --border: #1e2d40; --text: #c8d8e8; --text-dim: #5a7090;
+      --cell-size: 28px;
+    }
+    html, body { height: 100%; background: var(--bg-dark); color: var(--text); font-family: 'Rajdhani', sans-serif; overflow-x: hidden; }
+
+    /* ── ФОНОВАЯ СЕТКА ── */
+    .grid-bg { position: fixed; inset: 0; z-index: 0; display: grid; grid-template-columns: repeat(28,1fr); grid-template-rows: repeat(18,1fr); opacity: 0.06; pointer-events: none; }
+    .grid-cell { border: 1px solid #2244aa; }
+    .glow-orb { position: fixed; border-radius: 50%; filter: blur(80px); pointer-events: none; z-index: 0; }
+    .glow-orb.left  { width:500px; height:500px; background:radial-gradient(circle,rgba(180,100,20,.12),transparent 70%); top:20%; left:-10%; }
+    .glow-orb.right { width:400px; height:400px; background:radial-gradient(circle,rgba(30,80,200,.1),transparent 70%); bottom:10%; right:-5%; }
+
+    /* ── ЭКРАНЫ ── */
+    .screen { display: none; position: relative; z-index: 1; min-height: 100vh; }
+    .screen.active { display: flex; }
+
+    /* ══ ЭКРАН ЛОГИНА ══ */
+    #authScreen { align-items: center; justify-content: center; padding: 20px; }
+    .wrapper { display:flex; flex-direction:column; align-items:center; gap:28px; width:100%; max-width:460px; animation: fadeIn .8s ease forwards; }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
+    .logo { text-align:center; }
+    .logo-icon { font-size:48px; display:block; margin-bottom:8px; filter:drop-shadow(0 0 20px rgba(201,168,76,.6)); animation:pulse 3s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{filter:drop-shadow(0 0 20px rgba(201,168,76,.6))} 50%{filter:drop-shadow(0 0 35px rgba(201,168,76,.9))} }
+    .logo h1 { font-family:'Cinzel Decorative',serif; font-size:clamp(18px,4vw,26px); font-weight:900; letter-spacing:3px; background:linear-gradient(135deg,#f0d080,#c9a84c,#f0d080); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .logo-sub { font-family:'Cinzel',serif; font-size:11px; letter-spacing:6px; color:var(--text-dim); margin-top:6px; }
+    .logo-line { width:80px; height:1px; background:linear-gradient(90deg,transparent,var(--gold),transparent); margin:12px auto 0; }
+    .card { width:100%; background:var(--bg-card); border:1px solid var(--border); position:relative; overflow:hidden; }
+    .card::before { content:''; position:absolute; top:0;left:0;right:0; height:2px; background:linear-gradient(90deg,transparent,var(--gold),transparent); }
+    .corner { position:absolute; width:16px; height:16px; border-color:var(--gold-dim); border-style:solid; opacity:.6; }
+    .corner.tl{top:6px;left:6px;border-width:1px 0 0 1px} .corner.tr{top:6px;right:6px;border-width:1px 1px 0 0}
+    .corner.bl{bottom:6px;left:6px;border-width:0 0 1px 1px} .corner.br{bottom:6px;right:6px;border-width:0 1px 1px 0}
+    .tabs { display:grid; grid-template-columns:1fr 1fr; border-bottom:1px solid var(--border); }
+    .tab { padding:16px; text-align:center; font-family:'Cinzel',serif; font-size:12px; letter-spacing:3px; text-transform:uppercase; color:var(--text-dim); cursor:pointer; transition:all .3s; background:none; border:none; outline:none; position:relative; }
+    .tab:hover{color:var(--gold)} .tab.active{color:var(--gold-light);background:rgba(201,168,76,.05)}
+    .tab.active::after{content:'';position:absolute;bottom:-1px;left:20%;right:20%;height:2px;background:var(--gold);box-shadow:0 0 8px var(--gold)}
+    .forms{padding:28px}
+    .form-panel{display:none} .form-panel.active{display:flex;flex-direction:column;gap:16px;animation:slideIn .3s ease}
+    @keyframes slideIn{from{opacity:0;transform:translateX(10px)}to{opacity:1;transform:translateX(0)}}
+    .field{display:flex;flex-direction:column;gap:6px}
+    .field label{font-family:'Cinzel',serif;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--text-dim)}
+    .field-wrap{position:relative}
+    .field-wrap .icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:14px;pointer-events:none;opacity:.5}
+    .field input{width:100%;background:rgba(255,255,255,.03);border:1px solid var(--border);color:var(--text);font-family:'Rajdhani',sans-serif;font-size:15px;padding:11px 14px 11px 40px;outline:none;transition:all .3s}
+    .field input::placeholder{color:var(--text-dim);opacity:.6}
+    .field input:focus{border-color:var(--gold-dim);background:rgba(201,168,76,.04);box-shadow:0 0 0 3px rgba(201,168,76,.07)}
+    .btn{position:relative;width:100%;padding:13px;background:linear-gradient(135deg,#1a1200,#2a1e00);border:1px solid var(--gold-dim);color:var(--gold-light);font-family:'Cinzel',serif;font-size:12px;font-weight:600;letter-spacing:4px;text-transform:uppercase;cursor:pointer;overflow:hidden;transition:all .3s;margin-top:4px}
+    .btn:hover{border-color:var(--gold);box-shadow:0 0 20px rgba(201,168,76,.2)}
+    .btn.loading{pointer-events:none;opacity:.6}
+    .message{padding:10px 14px;font-size:13px;font-weight:600;border-left:3px solid;display:none}
+    .message.error{background:rgba(192,57,43,.1);border-color:var(--red);color:#ff6b6b;display:block}
+    .message.success{background:rgba(39,174,96,.1);border-color:#27ae60;color:#5dea8a;display:block}
+    .card-footer{padding:14px 28px;border-top:1px solid var(--border);text-align:center;font-size:12px;color:var(--text-dim);background:rgba(0,0,0,.2)}
+    .card-footer span{color:var(--gold-dim);margin:0 4px}
+
+    /* ══ ЭКРАН ПРОФИЛЯ ══ */
+    #profileScreen { align-items:center; justify-content:center; padding:20px; flex-direction:column; gap:20px; }
+    .profile-card { width:100%; max-width:500px; background:var(--bg-card); border:1px solid var(--border); position:relative; overflow:hidden; }
+    .profile-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+    .profile-header{padding:24px 28px;display:flex;align-items:center;gap:20px;border-bottom:1px solid var(--border)}
+    .avatar{width:60px;height:60px;background:linear-gradient(135deg,#1a1200,#2a1e00);border:2px solid var(--gold-dim);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0}
+    .profile-info h2{font-family:'Cinzel',serif;font-size:18px;color:var(--gold-light);letter-spacing:2px}
+    .profile-info p{font-size:12px;color:var(--text-dim);margin-top:4px;letter-spacing:1px}
+    .profile-stats{display:grid;grid-template-columns:repeat(4,1fr)}
+    .stat{padding:16px;text-align:center;border-right:1px solid var(--border)}
+    .stat:last-child{border-right:none}
+    .stat-val{font-family:'Cinzel Decorative',serif;font-size:20px;color:var(--gold);display:block}
+    .stat-label{font-size:10px;color:var(--text-dim);letter-spacing:2px;text-transform:uppercase;margin-top:3px;display:block}
+    .profile-actions{padding:16px 28px;display:flex;gap:10px}
+    .btn-play{flex:2;padding:13px;background:linear-gradient(135deg,#0a1a00,#1a3000);border:1px solid #2a5010;color:#7dea4a;font-family:'Cinzel',serif;font-size:11px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;transition:all .3s}
+    .btn-play:hover{border-color:#5a9030;box-shadow:0 0 15px rgba(100,200,50,.2)}
+    .btn-logout{flex:1;padding:13px;background:rgba(192,57,43,.1);border:1px solid rgba(192,57,43,.3);color:#ff6b6b;font-family:'Cinzel',serif;font-size:10px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;transition:all .3s}
+    .btn-logout:hover{background:rgba(192,57,43,.2);border-color:var(--red)}
+
+    /* ══ ЭКРАН ИГРЫ ══ */
+    #gameScreen { flex-direction:column; align-items:center; padding:16px; gap:16px; }
+
+    /* Шапка игры */
+    .game-header { width:100%; max-width:1200px; display:flex; align-items:center; justify-content:space-between; background:var(--bg-card); border:1px solid var(--border); padding:12px 20px; position:relative; }
+    .game-header::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+    .game-title { font-family:'Cinzel Decorative',serif; font-size:14px; color:var(--gold); letter-spacing:2px; }
+    .game-hud { display:flex; gap:24px; align-items:center; }
+    .hud-item { display:flex; flex-direction:column; align-items:center; gap:2px; }
+    .hud-val { font-family:'Cinzel Decorative',serif; font-size:18px; color:var(--gold-light); }
+    .hud-label { font-size:10px; color:var(--text-dim); letter-spacing:2px; text-transform:uppercase; }
+    .hud-timer { font-family:'Cinzel Decorative',serif; font-size:22px; color:#ff6b6b; min-width:60px; text-align:center; }
+    .btn-back { padding:8px 16px; background:transparent; border:1px solid var(--border); color:var(--text-dim); font-family:'Cinzel',serif; font-size:10px; letter-spacing:2px; cursor:pointer; transition:all .3s; }
+    .btn-back:hover{border-color:var(--text-dim);color:var(--text)}
+
+    /* Полоса этапов */
+    .stage-bar { width:100%; max-width:1200px; display:flex; gap:8px; }
+    .stage-item { flex:1; padding:8px; text-align:center; background:var(--bg-card); border:1px solid var(--border); font-family:'Cinzel',serif; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--text-dim); transition:all .3s; position:relative; overflow:hidden; }
+    .stage-item.active { border-color:var(--gold); color:var(--gold); background:rgba(201,168,76,.05); }
+    .stage-item.done { border-color:#27ae60; color:#5dea8a; background:rgba(39,174,96,.05); }
+    .stage-item.done::after { content:'✓'; position:absolute; right:8px; top:50%; transform:translateY(-50%); }
+
+    /* Поле */
+    .board-wrap { position:relative; overflow:auto; max-width:100%; max-height:70vh; border:1px solid var(--border); background:rgba(0,0,0,.3); }
+    .board { display:inline-grid; gap:1px; padding:4px; background:var(--border); }
+    .cell {
+      width: var(--cell-size); height: var(--cell-size);
+      background: #1a2535; border: 1px solid #2a3a50;
+      display:flex; align-items:center; justify-content:center;
+      font-size:13px; font-weight:700; cursor:pointer;
+      transition:background .15s, transform .1s;
+      user-select:none; font-family:'Rajdhani',sans-serif;
+      position: relative;
+    }
+    .cell:hover:not(.open):not(.exploded) { background:#243040; transform:scale(1.05); z-index:1; }
+    .cell.open { background:#0d1520; cursor:default; border-color:#1a2535; }
+    .cell.flagged { background:#1a2010; border-color:#3a5010; }
+    .cell.exploded { background:#3a0a0a !important; border-color:#aa2020 !important; animation:boom .3s ease; }
+    @keyframes boom { 0%{transform:scale(1.4)} 100%{transform:scale(1)} }
+    .cell.reveal-anim { animation:reveal .2s ease; }
+    @keyframes reveal { 0%{transform:scale(0.8);opacity:.5} 100%{transform:scale(1);opacity:1} }
+    /* Цвета цифр */
+    .n1{color:#4488ff} .n2{color:#44cc44} .n3{color:#ff4444} .n4{color:#8844ff}
+    .n5{color:#ff8844} .n6{color:#44cccc} .n7{color:#ff44ff} .n8{color:#aaaaaa}
+
+    /* Оверлей победы/поражения */
+    .game-overlay { position:absolute; inset:0; background:rgba(0,0,0,.85); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px; z-index:10; animation:fadeIn .4s ease; }
+    .overlay-title { font-family:'Cinzel Decorative',serif; font-size:clamp(24px,4vw,40px); letter-spacing:4px; }
+    .overlay-title.win  { color:var(--gold-light); text-shadow:0 0 30px rgba(201,168,76,.6); }
+    .overlay-title.lose { color:#ff4444; text-shadow:0 0 30px rgba(255,68,68,.4); }
+    .overlay-sub { font-family:'Cinzel',serif; font-size:14px; color:var(--text-dim); letter-spacing:3px; }
+    .overlay-btns { display:flex; gap:12px; }
+    .overlay-btn { padding:12px 28px; font-family:'Cinzel',serif; font-size:11px; letter-spacing:3px; text-transform:uppercase; cursor:pointer; transition:all .3s; border:1px solid; }
+    .overlay-btn.next { background:rgba(201,168,76,.1); border-color:var(--gold); color:var(--gold-light); }
+    .overlay-btn.next:hover{background:rgba(201,168,76,.2);box-shadow:0 0 15px rgba(201,168,76,.2)}
+    .overlay-btn.retry { background:rgba(255,68,68,.1); border-color:#ff4444; color:#ff8888; }
+    .overlay-btn.retry:hover{background:rgba(255,68,68,.2)}
+    .overlay-btn.menu  { background:transparent; border-color:var(--border); color:var(--text-dim); }
+    .overlay-btn.menu:hover{border-color:var(--text-dim);color:var(--text)}
+
+    /* Уровень завершён */
+    .level-complete { background:rgba(0,0,0,.92); }
+    .stars { font-size:40px; letter-spacing:8px; }
+
+    /* Подсказка ПКМ */
+    .hint { font-size:11px; color:var(--text-dim); letter-spacing:1px; text-align:center; }
+  </style>
+</head>
+<body>
+
+<div class="grid-bg" id="gridBg"></div>
+<div class="glow-orb left"></div>
+<div class="glow-orb right"></div>
+
+<!-- ══ ЭКРАН ЛОГИНА ══ -->
+<div class="screen active" id="authScreen">
+  <div class="wrapper">
+    <div class="logo">
+      <span class="logo-icon">💣</span>
+      <h1>Сапёр × Дота</h1>
+      <p class="logo-sub">Tactical Minesweeper</p>
+      <div class="logo-line"></div>
+    </div>
+    <div class="card">
+      <div class="corner tl"></div><div class="corner tr"></div>
+      <div class="corner bl"></div><div class="corner br"></div>
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab('login')">Войти</button>
+        <button class="tab" onclick="switchTab('register')">Регистрация</button>
+      </div>
+      <div class="forms">
+        <div class="form-panel active" id="loginForm">
+          <div id="loginMsg" class="message"></div>
+          <div class="field"><label>Логин</label><div class="field-wrap"><span class="icon">⚔️</span><input type="text" id="loginUsername" placeholder="Введи логин"></div></div>
+          <div class="field"><label>Пароль</label><div class="field-wrap"><span class="icon">🔑</span><input type="password" id="loginPassword" placeholder="Введи пароль"></div></div>
+          <button class="btn" id="loginBtn" onclick="login()"><span>Войти в игру</span></button>
+        </div>
+        <div class="form-panel" id="registerForm">
+          <div id="registerMsg" class="message"></div>
+          <div class="field"><label>Логин</label><div class="field-wrap"><span class="icon">⚔️</span><input type="text" id="regUsername" placeholder="Придумай логин"></div></div>
+          <div class="field"><label>Email</label><div class="field-wrap"><span class="icon">📜</span><input type="email" id="regEmail" placeholder="Введи email"></div></div>
+          <div class="field"><label>Пароль</label><div class="field-wrap"><span class="icon">🔑</span><input type="password" id="regPassword" placeholder="Придумай пароль"></div></div>
+          <button class="btn" id="registerBtn" onclick="register()"><span>Начать путь</span></button>
+        </div>
+      </div>
+      <div class="card-footer">Tactical Minesweeper <span>×</span> Dota Heroes</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ЭКРАН ПРОФИЛЯ ══ -->
+<div class="screen" id="profileScreen">
+  <div class="profile-card">
+    <div class="corner tl"></div><div class="corner tr"></div>
+    <div class="corner bl"></div><div class="corner br"></div>
+    <div class="profile-header">
+      <div class="avatar">🧙</div>
+      <div class="profile-info">
+        <h2 id="profileName">—</h2>
+        <p id="profileRank">Herald • MMR 0</p>
+      </div>
+    </div>
+    <div class="profile-stats">
+      <div class="stat"><span class="stat-val" id="statWins">0</span><span class="stat-label">Победы</span></div>
+      <div class="stat"><span class="stat-val" id="statLosses">0</span><span class="stat-label">Пораж.</span></div>
+      <div class="stat"><span class="stat-val" id="statLevel">1</span><span class="stat-label">Уровень</span></div>
+      <div class="stat"><span class="stat-val" id="statMMR">0</span><span class="stat-label">MMR</span></div>
+    </div>
+    <div class="profile-actions">
+      <button class="btn-play" onclick="showGame()">⚔ Играть</button>
+      <button class="btn-logout" onclick="logout()">Выйти</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ЭКРАН ИГРЫ ══ -->
+<div class="screen" id="gameScreen">
+
+  <div class="game-header">
+    <div class="game-title">💣 САПЁР × ДОТА</div>
+    <div class="game-hud">
+      <div class="hud-item"><span class="hud-val" id="hudMines">0</span><span class="hud-label">Мины</span></div>
+      <div class="hud-item"><span class="hud-timer" id="hudTimer">0</span><span class="hud-label">Секунды</span></div>
+      <div class="hud-item"><span class="hud-val" id="hudFlags">0</span><span class="hud-label">Флаги</span></div>
+    </div>
+    <button class="btn-back" onclick="showProfile()">← Профиль</button>
+  </div>
+
+  <div class="stage-bar">
+    <div class="stage-item active" id="stage1">Этап 1 — 9×9</div>
+    <div class="stage-item" id="stage2">Этап 2 — 20×20</div>
+    <div class="stage-item" id="stage3">Этап 3 — 35×35</div>
+  </div>
+
+  <div class="board-wrap" id="boardWrap">
+    <div class="board" id="board"></div>
+  </div>
+
+  <p class="hint">ЛКМ — открыть &nbsp;|&nbsp; ПКМ — флаг 🚩 &nbsp;|&nbsp; ЛКМ по цифре — открыть соседей &nbsp;|&nbsp; ПКМ по цифре — поставить флаги</p>
+
+</div>
+
+<script>
+// ══════════════════════════════════════
+//  НАВИГАЦИЯ
+// ══════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function showProfile() { showScreen('profileScreen'); stopTimer(); }
+function showGame()    { showScreen('gameScreen'); startStage(currentStage); }
+
+// ══════════════════════════════════════
+//  АВТОРИЗАЦИЯ
+// ══════════════════════════════════════
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active',(i===0&&tab==='login')||(i===1&&tab==='register')));
+  document.getElementById('loginForm').classList.toggle('active', tab==='login');
+  document.getElementById('registerForm').classList.toggle('active', tab==='register');
+  clearMessages();
+}
+function clearMessages() {
+  ['loginMsg','registerMsg'].forEach(id => { const e=document.getElementById(id); e.className='message'; e.textContent=''; });
+}
+function showMsg(id,text,type) { const e=document.getElementById(id); e.textContent=text; e.className=`message ${type}`; }
+
+async function login() {
+  const username = document.getElementById('loginUsername').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  if (!username||!password) return showMsg('loginMsg','Заполни все поля','error');
+  try {
+    const res = await fetch('/api/users/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password})});
+    const data = await res.json();
+    if (!res.ok) return showMsg('loginMsg',data.error||'Ошибка','error');
+    showMsg('loginMsg','✓ Добро пожаловать!','success');
+    setTimeout(loadProfile, 700);
+  } catch { showMsg('loginMsg','Сервер недоступен','error'); }
+}
+
+async function register() {
+  const username = document.getElementById('regUsername').value.trim();
+  const email    = document.getElementById('regEmail').value.trim();
+  const password = document.getElementById('regPassword').value;
+  if (!username||!email||!password) return showMsg('registerMsg','Заполни все поля','error');
+  if (password.length<6) return showMsg('registerMsg','Пароль минимум 6 символов','error');
+  try {
+    const res = await fetch('/api/users/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,email,password})});
+    const data = await res.json();
+    if (!res.ok) return showMsg('registerMsg',data.error||'Ошибка','error');
+    showMsg('registerMsg','✓ Аккаунт создан! Входим...','success');
+    setTimeout(async()=>{ await fetch('/api/users/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password})}); loadProfile(); },1000);
+  } catch { showMsg('registerMsg','Сервер недоступен','error'); }
+}
+
+async function loadProfile() {
+  try {
+    const res = await fetch('/api/users/me');
+    if (!res.ok) return;
+    const u = await res.json();
+    document.getElementById('profileName').textContent  = u.username;
+    document.getElementById('profileRank').textContent  = `${u.rank_name||'Herald'} • MMR ${u.mmr||0}`;
+    document.getElementById('statWins').textContent     = u.wins||0;
+    document.getElementById('statLosses').textContent   = u.losses||0;
+    document.getElementById('statLevel').textContent    = u.level||1;
+    document.getElementById('statMMR').textContent      = u.mmr||0;
+    currentUser = u;
+    showScreen('profileScreen');
+  } catch {}
+}
+
+async function logout() {
+  await fetch('/api/users/logout',{method:'POST'});
+  currentUser = null;
+  showScreen('authScreen');
+  clearMessages();
+}
+
+// ══════════════════════════════════════
+//  ИГРОВАЯ ЛОГИКА
+// ══════════════════════════════════════
+let currentUser  = null;
+let currentStage = 1;   // 1,2,3
+let board        = [];
+let revealed     = [];
+let flagged      = [];
+let mineCount    = 0;
+let rows = 0, cols = 0;
+let gameOver     = false;
+let firstClick   = true;
+let timerInterval= null;
+let seconds      = 0;
+let stagesDone   = [false,false,false];
+
+const STAGES = [
+  { rows:9,  cols:9,  mines:10 },   // Этап 1
+  { rows:20, cols:20, mines:50 },   // Этап 2
+  { rows:35, cols:35, mines:180},   // Этап 3
+];
+
+function startStage(stageNum) {
+  currentStage = stageNum;
+  const cfg = STAGES[stageNum-1];
+  rows = cfg.rows; cols = cfg.cols; mineCount = cfg.mines;
+
+  // Обновить UI этапов
+  for(let i=1;i<=3;i++) {
+    const el = document.getElementById(`stage${i}`);
+    el.className = 'stage-item';
+    if(stagesDone[i-1]) el.classList.add('done');
+    else if(i===stageNum) el.classList.add('active');
+  }
+
+  // Обновить CSS переменную размера клетки
+  const size = stageNum===1?44: stageNum===2?28:20;
+  document.documentElement.style.setProperty('--cell-size', size+'px');
+
+  initBoard();
+  renderBoard();
+  stopTimer();
+  seconds = 0;
+  document.getElementById('hudTimer').textContent = '0';
+  document.getElementById('hudMines').textContent = mineCount;
+  document.getElementById('hudFlags').textContent = '0';
+  gameOver   = false;
+  firstClick = true;
+
+  // Убрать старый оверлей
+  const old = document.getElementById('gameOverlay');
+  if(old) old.remove();
+}
+
+function initBoard() {
+  board    = Array.from({length:rows},()=>Array(cols).fill(0));
+  revealed = Array.from({length:rows},()=>Array(cols).fill(false));
+  flagged  = Array.from({length:rows},()=>Array(cols).fill(false));
+}
+
+function placeMines(safeR, safeC) {
+  let placed = 0;
+  while(placed < mineCount) {
+    const r = Math.floor(Math.random()*rows);
+    const c = Math.floor(Math.random()*cols);
+    // Не ставить мину рядом с первым кликом (3x3 зона)
+    if(board[r][c]===-1) continue;
+    if(Math.abs(r-safeR)<=1 && Math.abs(c-safeC)<=1) continue;
+    board[r][c] = -1;
+    placed++;
+  }
+  // Посчитать цифры
+  for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) {
+    if(board[r][c]===-1) continue;
+    let cnt=0;
+    for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++) {
+      const nr=r+dr, nc=c+dc;
+      if(nr>=0&&nr<rows&&nc>=0&&nc<cols&&board[nr][nc]===-1) cnt++;
+    }
+    board[r][c]=cnt;
+  }
+}
+
+function renderBoard() {
+  const b = document.getElementById('board');
+  b.style.gridTemplateColumns = `repeat(${cols}, var(--cell-size))`;
+  b.innerHTML='';
+  for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) {
+    const cell = document.createElement('div');
+    cell.className='cell';
+    cell.dataset.r=r; cell.dataset.c=c;
+    cell.addEventListener('click',  onLeftClick);
+    cell.addEventListener('contextmenu', onRightClick);
+    b.appendChild(cell);
+  }
+}
+
+function getCell(r,c) {
+  return document.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);
+}
+
+function onLeftClick(e) {
+  if(gameOver) return;
+  const r=+e.target.dataset.r, c=+e.target.dataset.c;
+  if(flagged[r][c]) return;
+
+  if(firstClick) {
+    firstClick=false;
+    placeMines(r,c);
+    startTimer();
+  }
+
+  // Если клетка уже открыта и это цифра — открыть соседей (chord)
+  if(revealed[r][c] && board[r][c]>0) {
+    chordOpen(r,c);
+    checkWin();
+    return;
+  }
+
+  if(!revealed[r][c]) {
+    openCell(r,c);
+    checkWin();
+  }
+}
+
+function onRightClick(e) {
+  e.preventDefault();
+  if(gameOver) return;
+  const r=+e.target.dataset.r, c=+e.target.dataset.c;
+
+  // Если клетка уже открыта и это цифра — поставить флаги на соседей (chord flag)
+  if(revealed[r][c] && board[r][c]>0) {
+    chordFlag(r,c);
+    return;
+  }
+
+  if(revealed[r][c]) return;
+  flagged[r][c] = !flagged[r][c];
+  const cell = getCell(r,c);
+  cell.textContent = flagged[r][c]?'🚩':'';
+  cell.classList.toggle('flagged', flagged[r][c]);
+  const flags = flagged.flat().filter(Boolean).length;
+  document.getElementById('hudFlags').textContent = flags;
+}
+
+// Открыть всех соседей цифры (если флагов вокруг столько же сколько цифра)
+function chordOpen(r,c) {
+  const num = board[r][c];
+  let flagCount = 0;
+  const neighbors = [];
+  for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++) {
+    if(dr===0&&dc===0) continue;
+    const nr=r+dr, nc=c+dc;
+    if(nr<0||nr>=rows||nc<0||nc>=cols) continue;
+    if(flagged[nr][nc]) flagCount++;
+    else if(!revealed[nr][nc]) neighbors.push([nr,nc]);
+  }
+  if(flagCount===num) {
+    neighbors.forEach(([nr,nc])=>openCell(nr,nc));
+  }
+}
+
+// Поставить флаги на всех закрытых соседей цифры (если их столько же сколько цифра)
+function chordFlag(r,c) {
+  const num = board[r][c];
+  const closed = [];
+  for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++) {
+    if(dr===0&&dc===0) continue;
+    const nr=r+dr, nc=c+dc;
+    if(nr<0||nr>=rows||nc<0||nc>=cols) continue;
+    if(!revealed[nr][nc]&&!flagged[nr][nc]) closed.push([nr,nc]);
+  }
+  if(closed.length===num) {
+    closed.forEach(([nr,nc])=>{
+      flagged[nr][nc]=true;
+      const cell=getCell(nr,nc);
+      cell.textContent='🚩';
+      cell.classList.add('flagged');
+    });
+    const flags=flagged.flat().filter(Boolean).length;
+    document.getElementById('hudFlags').textContent=flags;
+  }
+}
+
+function openCell(r,c) {
+  if(r<0||r>=rows||c<0||c>=cols) return;
+  if(revealed[r][c]||flagged[r][c]) return;
+  revealed[r][c]=true;
+  const cell = getCell(r,c);
+  cell.classList.add('open','reveal-anim');
+
+  if(board[r][c]===-1) {
+    // МИНА!
+    cell.textContent='💣';
+    cell.classList.add('exploded');
+    stopTimer();
+    gameOver=true;
+    setTimeout(()=>revealAllMines(), 300);
+    setTimeout(()=>showOverlay('lose'), 800);
+    return;
+  }
+  if(board[r][c]>0) {
+    cell.textContent=board[r][c];
+    cell.classList.add('n'+board[r][c]);
+  } else {
+    // Пустая — открыть соседей
+    for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++) openCell(r+dr,c+dc);
+  }
+}
+
+function revealAllMines() {
+  for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) {
+    if(board[r][c]===-1 && !revealed[r][c]) {
+      const cell=getCell(r,c);
+      cell.textContent='💣';
+      cell.classList.add('open');
+    }
+  }
+}
+
+function checkWin() {
+  if(gameOver) return;
+  let unopened=0;
+  for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) if(!revealed[r][c]) unopened++;
+  if(unopened===mineCount) {
+    stopTimer();
+    gameOver=true;
+    stagesDone[currentStage-1]=true;
+    setTimeout(()=>showOverlay('win'), 400);
+  }
+}
+
+function showOverlay(type) {
+  const wrap = document.getElementById('boardWrap');
+  const old  = document.getElementById('gameOverlay');
+  if(old) old.remove();
+
+  const div = document.createElement('div');
+  div.className='game-overlay'; div.id='gameOverlay';
+
+  const allDone = stagesDone[0]&&stagesDone[1]&&stagesDone[2];
+
+  if(type==='win') {
+    if(allDone) {
+      // Все 3 этапа пройдены — переход на следующий уровень
+      updateStats(true);
+      div.innerHTML=`
+        <div class="stars">⭐⭐⭐</div>
+        <div class="overlay-title win">УРОВЕНЬ ПРОЙДЕН!</div>
+        <div class="overlay-sub">Все 3 этапа завершены • Уровень повышен</div>
+        <div class="overlay-btns">
+          <button class="overlay-btn next" onclick="nextLevel()">▶ Следующий уровень</button>
+          <button class="overlay-btn menu" onclick="showProfile()">Профиль</button>
+        </div>`;
+    } else if(currentStage<3) {
+      div.innerHTML=`
+        <div class="overlay-title win">ЭТАП ${currentStage} ПРОЙДЕН!</div>
+        <div class="overlay-sub">Время: ${seconds}с • Переход к следующему этапу</div>
+        <div class="overlay-btns">
+          <button class="overlay-btn next" onclick="startStage(${currentStage+1})">▶ Этап ${currentStage+1}</button>
+          <button class="overlay-btn menu" onclick="showProfile()">Профиль</button>
+        </div>`;
+    }
+  } else {
+    updateStats(false);
+    div.innerHTML=`
+      <div class="overlay-title lose">💥 ПОДРЫВ!</div>
+      <div class="overlay-sub">Этап ${currentStage} • Время: ${seconds}с</div>
+      <div class="overlay-btns">
+        <button class="overlay-btn retry" onclick="startStage(${currentStage})">↺ Заново</button>
+        <button class="overlay-btn retry" onclick="startStage(1)">↺ С этапа 1</button>
+        <button class="overlay-btn menu" onclick="showProfile()">Профиль</button>
+      </div>`;
+  }
+
+  wrap.style.position='relative';
+  div.style.position='absolute';
+  wrap.appendChild(div);
+}
+
+function nextLevel() {
+  stagesDone=[false,false,false];
+  startStage(1);
+}
+
+// ══════════════════════════════════════
+//  СТАТИСТИКА
+// ══════════════════════════════════════
+async function updateStats(win) {
+  try {
+    await fetch('/api/users/update-stats',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({win})
+    });
+    await loadProfileSilent();
+  } catch {}
+}
+
+async function loadProfileSilent() {
+  try {
+    const res = await fetch('/api/users/me');
+    if(!res.ok) return;
+    const u = await res.json();
+    document.getElementById('statWins').textContent   = u.wins||0;
+    document.getElementById('statLosses').textContent = u.losses||0;
+    document.getElementById('statLevel').textContent  = u.level||1;
+    document.getElementById('statMMR').textContent    = u.mmr||0;
+    document.getElementById('profileRank').textContent= `${u.rank_name||'Herald'} • MMR ${u.mmr||0}`;
+  } catch {}
+}
+
+// ══════════════════════════════════════
+//  ТАЙМЕР
+// ══════════════════════════════════════
+function startTimer() {
+  seconds=0;
+  timerInterval=setInterval(()=>{
+    seconds++;
+    document.getElementById('hudTimer').textContent=seconds;
+  },1000);
+}
+function stopTimer() { clearInterval(timerInterval); timerInterval=null; }
+
+// ══════════════════════════════════════
+//  ФОН
+// ══════════════════════════════════════
+const g=document.getElementById('gridBg');
+for(let i=0;i<28*18;i++){const c=document.createElement('div');c.className='grid-cell';g.appendChild(c);}
+
+// Клавиши Enter
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Enter') return;
+  if(document.getElementById('loginForm').classList.contains('active')) login();
+  else register();
+});
+
+// Проверка сессии при загрузке
+loadProfile();
+</script>
+</body>
+</html>
