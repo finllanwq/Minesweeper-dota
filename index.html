@@ -8,152 +8,208 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --gold: #c9a84c; --gold-light: #f0d080; --gold-dim: #7a6030;
-      --red: #c0392b; --bg-dark: #080a0e; --bg-card: #111820;
-      --border: #1e2d40; --text: #c8d8e8; --text-dim: #5a7090;
-      --cell-size: 28px;
+      --gold:#c9a84c; --gold-light:#f0d080; --gold-dim:#7a6030;
+      --red:#c0392b; --bg-dark:#080a0e; --bg-card:#111820;
+      --border:#1e2d40; --text:#c8d8e8; --text-dim:#5a7090;
+      --cell-size:44px;
     }
-    html, body { height: 100%; background: var(--bg-dark); color: var(--text); font-family: 'Rajdhani', sans-serif; overflow-x: hidden; }
-
-    /* ── ФОНОВАЯ СЕТКА ── */
-    .grid-bg { position: fixed; inset: 0; z-index: 0; display: grid; grid-template-columns: repeat(28,1fr); grid-template-rows: repeat(18,1fr); opacity: 0.06; pointer-events: none; }
-    .grid-cell { border: 1px solid #2244aa; }
-    .glow-orb { position: fixed; border-radius: 50%; filter: blur(80px); pointer-events: none; z-index: 0; }
-    .glow-orb.left  { width:500px; height:500px; background:radial-gradient(circle,rgba(180,100,20,.12),transparent 70%); top:20%; left:-10%; }
-    .glow-orb.right { width:400px; height:400px; background:radial-gradient(circle,rgba(30,80,200,.1),transparent 70%); bottom:10%; right:-5%; }
-
-    /* ── ЭКРАНЫ ── */
-    .screen { display: none; position: relative; z-index: 1; min-height: 100vh; }
-    .screen.active { display: flex; }
-
-    /* ══ ЭКРАН ЛОГИНА ══ */
-    #authScreen { align-items: center; justify-content: center; padding: 20px; }
-    .wrapper { display:flex; flex-direction:column; align-items:center; gap:28px; width:100%; max-width:460px; animation: fadeIn .8s ease forwards; }
-    @keyframes fadeIn { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
-    .logo { text-align:center; }
-    .logo-icon { font-size:48px; display:block; margin-bottom:8px; filter:drop-shadow(0 0 20px rgba(201,168,76,.6)); animation:pulse 3s ease-in-out infinite; }
-    @keyframes pulse { 0%,100%{filter:drop-shadow(0 0 20px rgba(201,168,76,.6))} 50%{filter:drop-shadow(0 0 35px rgba(201,168,76,.9))} }
-    .logo h1 { font-family:'Cinzel Decorative',serif; font-size:clamp(18px,4vw,26px); font-weight:900; letter-spacing:3px; background:linear-gradient(135deg,#f0d080,#c9a84c,#f0d080); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
-    .logo-sub { font-family:'Cinzel',serif; font-size:11px; letter-spacing:6px; color:var(--text-dim); margin-top:6px; }
-    .logo-line { width:80px; height:1px; background:linear-gradient(90deg,transparent,var(--gold),transparent); margin:12px auto 0; }
-    .card { width:100%; background:var(--bg-card); border:1px solid var(--border); position:relative; overflow:hidden; }
-    .card::before { content:''; position:absolute; top:0;left:0;right:0; height:2px; background:linear-gradient(90deg,transparent,var(--gold),transparent); }
-    .corner { position:absolute; width:16px; height:16px; border-color:var(--gold-dim); border-style:solid; opacity:.6; }
-    .corner.tl{top:6px;left:6px;border-width:1px 0 0 1px} .corner.tr{top:6px;right:6px;border-width:1px 1px 0 0}
-    .corner.bl{bottom:6px;left:6px;border-width:0 0 1px 1px} .corner.br{bottom:6px;right:6px;border-width:0 1px 1px 0}
-    .tabs { display:grid; grid-template-columns:1fr 1fr; border-bottom:1px solid var(--border); }
-    .tab { padding:16px; text-align:center; font-family:'Cinzel',serif; font-size:12px; letter-spacing:3px; text-transform:uppercase; color:var(--text-dim); cursor:pointer; transition:all .3s; background:none; border:none; outline:none; position:relative; }
-    .tab:hover{color:var(--gold)} .tab.active{color:var(--gold-light);background:rgba(201,168,76,.05)}
-    .tab.active::after{content:'';position:absolute;bottom:-1px;left:20%;right:20%;height:2px;background:var(--gold);box-shadow:0 0 8px var(--gold)}
-    .forms{padding:28px}
-    .form-panel{display:none} .form-panel.active{display:flex;flex-direction:column;gap:16px;animation:slideIn .3s ease}
+    html,body{height:100%;background:var(--bg-dark);color:var(--text);font-family:'Rajdhani',sans-serif;overflow-x:hidden;}
+    .grid-bg{position:fixed;inset:0;z-index:0;display:grid;grid-template-columns:repeat(28,1fr);grid-template-rows:repeat(18,1fr);opacity:.06;pointer-events:none;}
+    .grid-cell{border:1px solid #2244aa;}
+    .glow-orb{position:fixed;border-radius:50%;filter:blur(80px);pointer-events:none;z-index:0;}
+    .glow-orb.left{width:500px;height:500px;background:radial-gradient(circle,rgba(180,100,20,.12),transparent 70%);top:20%;left:-10%;}
+    .glow-orb.right{width:400px;height:400px;background:radial-gradient(circle,rgba(30,80,200,.1),transparent 70%);bottom:10%;right:-5%;}
+    .screen{display:none;position:relative;z-index:1;min-height:100vh;}
+    .screen.active{display:flex;}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
     @keyframes slideIn{from{opacity:0;transform:translateX(10px)}to{opacity:1;transform:translateX(0)}}
-    .field{display:flex;flex-direction:column;gap:6px}
-    .field label{font-family:'Cinzel',serif;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--text-dim)}
-    .field-wrap{position:relative}
-    .field-wrap .icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:14px;pointer-events:none;opacity:.5}
-    .field input{width:100%;background:rgba(255,255,255,.03);border:1px solid var(--border);color:var(--text);font-family:'Rajdhani',sans-serif;font-size:15px;padding:11px 14px 11px 40px;outline:none;transition:all .3s}
-    .field input::placeholder{color:var(--text-dim);opacity:.6}
-    .field input:focus{border-color:var(--gold-dim);background:rgba(201,168,76,.04);box-shadow:0 0 0 3px rgba(201,168,76,.07)}
-    .btn{position:relative;width:100%;padding:13px;background:linear-gradient(135deg,#1a1200,#2a1e00);border:1px solid var(--gold-dim);color:var(--gold-light);font-family:'Cinzel',serif;font-size:12px;font-weight:600;letter-spacing:4px;text-transform:uppercase;cursor:pointer;overflow:hidden;transition:all .3s;margin-top:4px}
-    .btn:hover{border-color:var(--gold);box-shadow:0 0 20px rgba(201,168,76,.2)}
-    .btn.loading{pointer-events:none;opacity:.6}
-    .message{padding:10px 14px;font-size:13px;font-weight:600;border-left:3px solid;display:none}
-    .message.error{background:rgba(192,57,43,.1);border-color:var(--red);color:#ff6b6b;display:block}
-    .message.success{background:rgba(39,174,96,.1);border-color:#27ae60;color:#5dea8a;display:block}
-    .card-footer{padding:14px 28px;border-top:1px solid var(--border);text-align:center;font-size:12px;color:var(--text-dim);background:rgba(0,0,0,.2)}
-    .card-footer span{color:var(--gold-dim);margin:0 4px}
+    @keyframes pulse{0%,100%{filter:drop-shadow(0 0 20px rgba(201,168,76,.6))}50%{filter:drop-shadow(0 0 35px rgba(201,168,76,.9))}}
 
-    /* ══ ЭКРАН ПРОФИЛЯ ══ */
-    #profileScreen { align-items:center; justify-content:center; padding:20px; flex-direction:column; gap:20px; }
-    .profile-card { width:100%; max-width:500px; background:var(--bg-card); border:1px solid var(--border); position:relative; overflow:hidden; }
-    .profile-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
-    .profile-header{padding:24px 28px;display:flex;align-items:center;gap:20px;border-bottom:1px solid var(--border)}
-    .avatar{width:60px;height:60px;background:linear-gradient(135deg,#1a1200,#2a1e00);border:2px solid var(--gold-dim);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0}
-    .profile-info h2{font-family:'Cinzel',serif;font-size:18px;color:var(--gold-light);letter-spacing:2px}
-    .profile-info p{font-size:12px;color:var(--text-dim);margin-top:4px;letter-spacing:1px}
-    .profile-stats{display:grid;grid-template-columns:repeat(4,1fr)}
-    .stat{padding:16px;text-align:center;border-right:1px solid var(--border)}
-    .stat:last-child{border-right:none}
-    .stat-val{font-family:'Cinzel Decorative',serif;font-size:20px;color:var(--gold);display:block}
-    .stat-label{font-size:10px;color:var(--text-dim);letter-spacing:2px;text-transform:uppercase;margin-top:3px;display:block}
-    .profile-actions{padding:16px 28px;display:flex;gap:10px}
-    .btn-play{flex:2;padding:13px;background:linear-gradient(135deg,#0a1a00,#1a3000);border:1px solid #2a5010;color:#7dea4a;font-family:'Cinzel',serif;font-size:11px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;transition:all .3s}
-    .btn-play:hover{border-color:#5a9030;box-shadow:0 0 15px rgba(100,200,50,.2)}
-    .btn-logout{flex:1;padding:13px;background:rgba(192,57,43,.1);border:1px solid rgba(192,57,43,.3);color:#ff6b6b;font-family:'Cinzel',serif;font-size:10px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;transition:all .3s}
-    .btn-logout:hover{background:rgba(192,57,43,.2);border-color:var(--red)}
+    /* ══ AUTH ══ */
+    #authScreen{align-items:center;justify-content:center;padding:20px;}
+    .wrapper{display:flex;flex-direction:column;align-items:center;gap:28px;width:100%;max-width:460px;animation:fadeIn .8s ease forwards;}
+    .logo{text-align:center;}
+    .logo-icon{font-size:48px;display:block;margin-bottom:8px;filter:drop-shadow(0 0 20px rgba(201,168,76,.6));animation:pulse 3s ease-in-out infinite;}
+    .logo h1{font-family:'Cinzel Decorative',serif;font-size:clamp(18px,4vw,26px);font-weight:900;letter-spacing:3px;background:linear-gradient(135deg,#f0d080,#c9a84c,#f0d080);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+    .logo-sub{font-family:'Cinzel',serif;font-size:11px;letter-spacing:6px;color:var(--text-dim);margin-top:6px;}
+    .logo-line{width:80px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:12px auto 0;}
+    .card{width:100%;background:var(--bg-card);border:1px solid var(--border);position:relative;overflow:hidden;}
+    .card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);}
+    .corner{position:absolute;width:16px;height:16px;border-color:var(--gold-dim);border-style:solid;opacity:.6;}
+    .corner.tl{top:6px;left:6px;border-width:1px 0 0 1px}.corner.tr{top:6px;right:6px;border-width:1px 1px 0 0}
+    .corner.bl{bottom:6px;left:6px;border-width:0 0 1px 1px}.corner.br{bottom:6px;right:6px;border-width:0 1px 1px 0}
+    .tabs{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border);}
+    .tab{padding:16px;text-align:center;font-family:'Cinzel',serif;font-size:12px;letter-spacing:3px;text-transform:uppercase;color:var(--text-dim);cursor:pointer;transition:all .3s;background:none;border:none;outline:none;position:relative;}
+    .tab:hover{color:var(--gold)}.tab.active{color:var(--gold-light);background:rgba(201,168,76,.05);}
+    .tab.active::after{content:'';position:absolute;bottom:-1px;left:20%;right:20%;height:2px;background:var(--gold);box-shadow:0 0 8px var(--gold);}
+    .forms{padding:28px;}
+    .form-panel{display:none}.form-panel.active{display:flex;flex-direction:column;gap:16px;animation:slideIn .3s ease;}
+    .field{display:flex;flex-direction:column;gap:6px;}
+    .field label{font-family:'Cinzel',serif;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--text-dim);}
+    .field-wrap{position:relative;}
+    .field-wrap .icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:14px;pointer-events:none;opacity:.5;}
+    .field input{width:100%;background:rgba(255,255,255,.03);border:1px solid var(--border);color:var(--text);font-family:'Rajdhani',sans-serif;font-size:15px;padding:11px 14px 11px 40px;outline:none;transition:all .3s;}
+    .field input::placeholder{color:var(--text-dim);opacity:.6;}
+    .field input:focus{border-color:var(--gold-dim);background:rgba(201,168,76,.04);box-shadow:0 0 0 3px rgba(201,168,76,.07);}
+    .btn{position:relative;width:100%;padding:13px;background:linear-gradient(135deg,#1a1200,#2a1e00);border:1px solid var(--gold-dim);color:var(--gold-light);font-family:'Cinzel',serif;font-size:12px;font-weight:600;letter-spacing:4px;text-transform:uppercase;cursor:pointer;overflow:hidden;transition:all .3s;margin-top:4px;}
+    .btn:hover{border-color:var(--gold);box-shadow:0 0 20px rgba(201,168,76,.2);}
+    .message{padding:10px 14px;font-size:13px;font-weight:600;border-left:3px solid;display:none;}
+    .message.error{background:rgba(192,57,43,.1);border-color:var(--red);color:#ff6b6b;display:block;}
+    .message.success{background:rgba(39,174,96,.1);border-color:#27ae60;color:#5dea8a;display:block;}
+    .card-footer{padding:14px 28px;border-top:1px solid var(--border);text-align:center;font-size:12px;color:var(--text-dim);background:rgba(0,0,0,.2);}
+    .card-footer span{color:var(--gold-dim);margin:0 4px;}
 
-    /* ══ ЭКРАН ИГРЫ ══ */
-    #gameScreen { flex-direction:column; align-items:center; padding:16px; gap:16px; }
+    /* ══ ПРОФИЛЬ ══ */
+    #profileScreen{align-items:center;justify-content:center;padding:20px;flex-direction:column;gap:20px;}
+    .profile-card{width:100%;max-width:500px;background:var(--bg-card);border:1px solid var(--border);position:relative;overflow:hidden;}
+    .profile-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);}
+    .profile-header{padding:24px 28px;display:flex;align-items:center;gap:20px;border-bottom:1px solid var(--border);}
+    .avatar{width:60px;height:60px;background:linear-gradient(135deg,#1a1200,#2a1e00);border:2px solid var(--gold-dim);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;}
+    .profile-info h2{font-family:'Cinzel',serif;font-size:18px;color:var(--gold-light);letter-spacing:2px;}
+    .profile-info p{font-size:12px;color:var(--text-dim);margin-top:4px;letter-spacing:1px;}
+    .profile-stats{display:grid;grid-template-columns:repeat(4,1fr);}
+    .stat{padding:16px;text-align:center;border-right:1px solid var(--border);}
+    .stat:last-child{border-right:none;}
+    .stat-val{font-family:'Cinzel Decorative',serif;font-size:20px;color:var(--gold);display:block;}
+    .stat-label{font-size:10px;color:var(--text-dim);letter-spacing:2px;text-transform:uppercase;margin-top:3px;display:block;}
+    .profile-actions{padding:16px 28px;display:flex;gap:10px;}
+    .btn-play{flex:2;padding:13px;background:linear-gradient(135deg,#0a1a00,#1a3000);border:1px solid #2a5010;color:#7dea4a;font-family:'Cinzel',serif;font-size:11px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;transition:all .3s;}
+    .btn-play:hover{border-color:#5a9030;box-shadow:0 0 15px rgba(100,200,50,.2);}
+    .btn-logout{flex:1;padding:13px;background:rgba(192,57,43,.1);border:1px solid rgba(192,57,43,.3);color:#ff6b6b;font-family:'Cinzel',serif;font-size:10px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;transition:all .3s;}
+    .btn-logout:hover{background:rgba(192,57,43,.2);border-color:var(--red);}
 
-    /* Шапка игры */
-    .game-header { width:100%; max-width:1200px; display:flex; align-items:center; justify-content:space-between; background:var(--bg-card); border:1px solid var(--border); padding:12px 20px; position:relative; }
-    .game-header::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
-    .game-title { font-family:'Cinzel Decorative',serif; font-size:14px; color:var(--gold); letter-spacing:2px; }
-    .game-hud { display:flex; gap:24px; align-items:center; }
-    .hud-item { display:flex; flex-direction:column; align-items:center; gap:2px; }
-    .hud-val { font-family:'Cinzel Decorative',serif; font-size:18px; color:var(--gold-light); }
-    .hud-label { font-size:10px; color:var(--text-dim); letter-spacing:2px; text-transform:uppercase; }
-    .hud-timer { font-family:'Cinzel Decorative',serif; font-size:22px; color:#ff6b6b; min-width:60px; text-align:center; }
-    .btn-back { padding:8px 16px; background:transparent; border:1px solid var(--border); color:var(--text-dim); font-family:'Cinzel',serif; font-size:10px; letter-spacing:2px; cursor:pointer; transition:all .3s; }
-    .btn-back:hover{border-color:var(--text-dim);color:var(--text)}
+    /* ══ ОКНО ПРОКАЧКИ СКИЛЛОВ ══ */
+    .skill-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:100;display:none;align-items:center;justify-content:center;}
+    .skill-modal-bg.active{display:flex;}
+    .skill-modal{background:var(--bg-card);border:1px solid var(--border);width:100%;max-width:680px;position:relative;animation:fadeIn .4s ease;}
+    .skill-modal::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);}
+    .skill-modal-header{padding:20px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+    .skill-modal-title{font-family:'Cinzel Decorative',serif;font-size:16px;color:var(--gold);letter-spacing:2px;}
+    .skill-points-badge{background:rgba(201,168,76,.15);border:1px solid var(--gold-dim);padding:6px 14px;font-family:'Cinzel',serif;font-size:12px;color:var(--gold-light);letter-spacing:2px;}
+    .skill-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:20px 28px;}
+    .skill-card{background:rgba(255,255,255,.03);border:1px solid var(--border);padding:16px;cursor:pointer;transition:all .3s;position:relative;overflow:hidden;}
+    .skill-card:hover{border-color:var(--gold-dim);background:rgba(201,168,76,.04);}
+    .skill-card.maxed{border-color:#27ae60;opacity:.7;cursor:default;}
+    .skill-card.no-points{opacity:.5;cursor:default;}
+    .skill-icon{font-size:32px;display:block;text-align:center;margin-bottom:8px;}
+    .skill-name{font-family:'Cinzel',serif;font-size:11px;letter-spacing:2px;color:var(--gold-light);text-align:center;margin-bottom:4px;}
+    .skill-hero{font-size:10px;color:var(--text-dim);text-align:center;margin-bottom:8px;letter-spacing:1px;}
+    .skill-desc{font-size:11px;color:var(--text);line-height:1.5;margin-bottom:10px;}
+    .skill-level-bar{display:flex;gap:4px;justify-content:center;margin-bottom:8px;}
+    .skill-dot{width:10px;height:10px;border-radius:50%;background:var(--border);border:1px solid var(--text-dim);transition:all .3s;}
+    .skill-dot.filled{background:var(--gold);border-color:var(--gold);box-shadow:0 0 6px var(--gold);}
+    .skill-upgrade-btn{width:100%;padding:7px;background:rgba(201,168,76,.1);border:1px solid var(--gold-dim);color:var(--gold-light);font-family:'Cinzel',serif;font-size:9px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .3s;}
+    .skill-upgrade-btn:hover{background:rgba(201,168,76,.2);}
+    .skill-modal-footer{padding:16px 28px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;}
+    .btn-start-stage{padding:12px 32px;background:linear-gradient(135deg,#0a1a00,#1a3000);border:1px solid #2a5010;color:#7dea4a;font-family:'Cinzel',serif;font-size:11px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;transition:all .3s;}
+    .btn-start-stage:hover{border-color:#5a9030;box-shadow:0 0 15px rgba(100,200,50,.2);}
 
-    /* Полоса этапов */
-    .stage-bar { width:100%; max-width:1200px; display:flex; gap:8px; }
-    .stage-item { flex:1; padding:8px; text-align:center; background:var(--bg-card); border:1px solid var(--border); font-family:'Cinzel',serif; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--text-dim); transition:all .3s; position:relative; overflow:hidden; }
-    .stage-item.active { border-color:var(--gold); color:var(--gold); background:rgba(201,168,76,.05); }
-    .stage-item.done { border-color:#27ae60; color:#5dea8a; background:rgba(39,174,96,.05); }
-    .stage-item.done::after { content:'✓'; position:absolute; right:8px; top:50%; transform:translateY(-50%); }
+    /* ══ ИГРА ══ */
+    #gameScreen{flex-direction:column;align-items:center;padding:12px;gap:10px;}
+    .game-header{width:100%;max-width:1400px;display:flex;align-items:center;justify-content:space-between;background:var(--bg-card);border:1px solid var(--border);padding:10px 16px;position:relative;}
+    .game-header::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);}
+    .game-title{font-family:'Cinzel Decorative',serif;font-size:13px;color:var(--gold);letter-spacing:2px;}
+    .game-hud{display:flex;gap:20px;align-items:center;}
+    .hud-item{display:flex;flex-direction:column;align-items:center;gap:1px;}
+    .hud-val{font-family:'Cinzel Decorative',serif;font-size:16px;color:var(--gold-light);}
+    .hud-label{font-size:9px;color:var(--text-dim);letter-spacing:2px;text-transform:uppercase;}
+    .hud-timer{font-family:'Cinzel Decorative',serif;font-size:20px;color:#ff6b6b;min-width:50px;text-align:center;}
+    .btn-back{padding:7px 14px;background:transparent;border:1px solid var(--border);color:var(--text-dim);font-family:'Cinzel',serif;font-size:10px;letter-spacing:2px;cursor:pointer;transition:all .3s;}
+    .btn-back:hover{border-color:var(--text-dim);color:var(--text);}
+    .stage-bar{width:100%;max-width:1400px;display:flex;gap:6px;}
+    .stage-item{flex:1;padding:6px;text-align:center;background:var(--bg-card);border:1px solid var(--border);font-family:'Cinzel',serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);transition:all .3s;position:relative;overflow:hidden;}
+    .stage-item.active{border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,.05);}
+    .stage-item.done{border-color:#27ae60;color:#5dea8a;background:rgba(39,174,96,.05);}
+    .stage-item.done::after{content:'✓';position:absolute;right:6px;top:50%;transform:translateY(-50%);}
 
-    /* Поле */
-    .board-wrap { position:relative; overflow:auto; max-width:100%; max-height:70vh; border:1px solid var(--border); background:rgba(0,0,0,.3); }
-    .board-wrap.fullwidth { max-width:calc(100vw - 32px); }
-    .board { display:inline-grid; gap:1px; padding:4px; background:var(--border); }
-    .cell {
-      width: var(--cell-size); height: var(--cell-size);
-      background: #2e4060; border: 1px solid #4a6080;
-      display:flex; align-items:center; justify-content:center;
-      font-size:13px; font-weight:700; cursor:pointer;
-      transition:background .15s, transform .1s;
-      user-select:none; font-family:'Rajdhani',sans-serif;
-      position: relative;
+    /* ══ ПАНЕЛЬ СКИЛЛОВ ══ */
+    .skill-bar{width:100%;max-width:1400px;display:flex;gap:8px;align-items:center;background:var(--bg-card);border:1px solid var(--border);padding:8px 12px;}
+    .skill-slot{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:6px 10px;border:1px solid var(--border);transition:all .3s;position:relative;min-width:70px;}
+    .skill-slot:hover:not(.disabled){border-color:var(--gold-dim);background:rgba(201,168,76,.05);}
+    .skill-slot.active-skill{border-color:#44aaff;background:rgba(68,170,255,.1);box-shadow:0 0 10px rgba(68,170,255,.3);}
+    .skill-slot.on-cooldown{opacity:.5;cursor:default;}
+    .skill-slot.disabled{opacity:.3;cursor:default;}
+    .skill-slot-icon{font-size:20px;}
+    .skill-slot-key{font-family:'Cinzel',serif;font-size:9px;color:var(--gold);letter-spacing:1px;}
+    .skill-slot-uses{font-size:10px;color:var(--text-dim);}
+    .skill-slot-name{font-size:9px;color:var(--text-dim);letter-spacing:1px;text-align:center;}
+    .skill-slot-lvl{font-size:9px;color:var(--gold-dim);}
+    .shield-timer{font-family:'Cinzel Decorative',serif;font-size:11px;color:#aa66ff;display:none;}
+    .skill-bar-points{margin-left:auto;font-family:'Cinzel',serif;font-size:11px;color:var(--gold);letter-spacing:2px;border:1px solid var(--gold-dim);padding:4px 10px;}
+
+    /* ══ ПОЛЕ ══ */
+    .board-area{position:relative;overflow:auto;max-width:100%;max-height:65vh;}
+    .board-area.fullwidth{max-width:calc(100vw - 24px);}
+    .board-container{display:flex;}
+    .board-col-labels{display:flex;padding-left:28px;}
+    .col-label{display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--text-dim);font-family:'Rajdhani',sans-serif;font-weight:600;opacity:.6;}
+    .board-rows{display:flex;flex-direction:column;}
+    .row-label{display:flex;align-items:center;justify-content:center;width:24px;font-size:9px;color:var(--text-dim);font-family:'Rajdhani',sans-serif;font-weight:600;opacity:.6;flex-shrink:0;}
+    .board-row{display:flex;}
+    .board{display:inline-grid;gap:1px;background:var(--border);}
+    .cell{
+      width:var(--cell-size);height:var(--cell-size);
+      background:#2e4060;border:1px solid #4a6080;
+      display:flex;align-items:center;justify-content:center;
+      font-size:13px;font-weight:700;cursor:pointer;
+      transition:background .15s,transform .1s;
+      user-select:none;font-family:'Rajdhani',sans-serif;
+      position:relative;
     }
-    .cell:hover:not(.open):not(.exploded) { background:#3a5070; transform:scale(1.05); z-index:1; }
-    .cell.open { background:#0d1520; cursor:default; border-color:#1a2535; }
-    .cell.flagged { background:#2a3a10; border-color:#4a6010; }
-    .cell.exploded { background:#3a0a0a !important; border-color:#aa2020 !important; animation:boom .3s ease; }
-    @keyframes boom { 0%{transform:scale(1.4)} 100%{transform:scale(1)} }
-    .cell.reveal-anim { animation:reveal .2s ease; }
-    @keyframes reveal { 0%{transform:scale(0.8);opacity:.5} 100%{transform:scale(1);opacity:1} }
-    /* Цвета цифр */
-    .n1{color:#4488ff} .n2{color:#44cc44} .n3{color:#ff4444} .n4{color:#8844ff}
-    .n5{color:#ff8844} .n6{color:#44cccc} .n7{color:#ff44ff} .n8{color:#aaaaaa}
+    .cell:hover:not(.open):not(.exploded){background:#3a5070;transform:scale(1.05);z-index:1;}
+    .cell.open{background:#0d1520;cursor:default;border-color:#1a2535;}
+    .cell.flagged{background:#2a3a10;border-color:#4a6010;}
+    .cell.exploded{background:#3a0a0a!important;border-color:#aa2020!important;}
+    .cell.shield-hit{background:#3a0050!important;border-color:#aa00ff!important;}
+    .cell.cm-frozen{background:#0a1a3a!important;border-color:#4488ff!important;animation:freeze .4s ease;}
+    .cell.wr-shot{background:#1a3a00!important;border-color:#88ff44!important;animation:shotReveal .3s ease;}
+    .cell.highlight-row{background:#2a3a10!important;border-color:#88ff44!important;}
+    .cell.highlight-col{background:#1a2a3a!important;border-color:#44aaff!important;}
+    @keyframes freeze{0%{filter:brightness(2) hue-rotate(180deg)}100%{filter:none}}
+    @keyframes shotReveal{0%{transform:scaleX(0)}100%{transform:scaleX(1)}}
+    .n1{color:#4488ff}.n2{color:#44cc44}.n3{color:#ff4444}.n4{color:#8844ff}
+    .n5{color:#ff8844}.n6{color:#44cccc}.n7{color:#ff44ff}.n8{color:#aaaaaa}
 
-    /* Оверлей победы/поражения */
-    .game-overlay { position:absolute; inset:0; background:rgba(0,0,0,.85); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px; z-index:10; animation:fadeIn .4s ease; }
-    .overlay-title { font-family:'Cinzel Decorative',serif; font-size:clamp(24px,4vw,40px); letter-spacing:4px; }
-    .overlay-title.win  { color:var(--gold-light); text-shadow:0 0 30px rgba(201,168,76,.6); }
-    .overlay-title.lose { color:#ff4444; text-shadow:0 0 30px rgba(255,68,68,.4); }
-    .overlay-sub { font-family:'Cinzel',serif; font-size:14px; color:var(--text-dim); letter-spacing:3px; }
-    .overlay-btns { display:flex; gap:12px; }
-    .overlay-btn { padding:12px 28px; font-family:'Cinzel',serif; font-size:11px; letter-spacing:3px; text-transform:uppercase; cursor:pointer; transition:all .3s; border:1px solid; }
-    .overlay-btn.next { background:rgba(201,168,76,.1); border-color:var(--gold); color:var(--gold-light); }
-    .overlay-btn.next:hover{background:rgba(201,168,76,.2);box-shadow:0 0 15px rgba(201,168,76,.2)}
-    .overlay-btn.retry { background:rgba(255,68,68,.1); border-color:#ff4444; color:#ff8888; }
-    .overlay-btn.retry:hover{background:rgba(255,68,68,.2)}
-    .overlay-btn.menu  { background:transparent; border-color:var(--border); color:var(--text-dim); }
-    .overlay-btn.menu:hover{border-color:var(--text-dim);color:var(--text)}
+    /* Щит TA — фиолетовое поле */
+    .board-area.shield-active .cell:not(.open):not(.flagged){
+      border-color:#6600aa!important;
+      box-shadow:inset 0 0 4px rgba(170,0,255,.3);
+    }
+    .board-area.shield-active{box-shadow:0 0 30px rgba(170,0,255,.4),inset 0 0 60px rgba(100,0,200,.1);}
 
-    /* Уровень завершён */
-    .level-complete { background:rgba(0,0,0,.92); }
-    .stars { font-size:40px; letter-spacing:8px; }
+    /* ══ ЭФФЕКТЫ ВЗРЫВА ══ */
+    .explosion{position:fixed;pointer-events:none;z-index:999;font-size:30px;animation:explodeAnim .6s ease forwards;}
+    @keyframes explodeAnim{0%{transform:scale(0) rotate(0deg);opacity:1}50%{transform:scale(2) rotate(180deg);opacity:1}100%{transform:scale(3) rotate(360deg);opacity:0}}
+    .spark{position:fixed;pointer-events:none;z-index:998;width:4px;height:4px;border-radius:50%;animation:sparkAnim .5s ease forwards;}
+    @keyframes sparkAnim{0%{transform:translate(0,0);opacity:1}100%{transform:translate(var(--sx),var(--sy));opacity:0}}
 
-    /* Подсказка ПКМ */
-    .hint { font-size:11px; color:var(--text-dim); letter-spacing:1px; text-align:center; }
+    /* ══ ОВЕРЛЕЙ ИГРЫ ══ */
+    .game-overlay{position:absolute;inset:0;background:rgba(0,0,0,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:10;animation:fadeIn .4s ease;}
+    .overlay-title{font-family:'Cinzel Decorative',serif;font-size:clamp(22px,4vw,38px);letter-spacing:4px;}
+    .overlay-title.win{color:var(--gold-light);text-shadow:0 0 30px rgba(201,168,76,.6);}
+    .overlay-title.lose{color:#ff4444;text-shadow:0 0 30px rgba(255,68,68,.4);}
+    .overlay-sub{font-family:'Cinzel',serif;font-size:13px;color:var(--text-dim);letter-spacing:3px;}
+    .overlay-btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+    .overlay-btn{padding:10px 24px;font-family:'Cinzel',serif;font-size:10px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;transition:all .3s;border:1px solid;}
+    .overlay-btn.next{background:rgba(201,168,76,.1);border-color:var(--gold);color:var(--gold-light);}
+    .overlay-btn.next:hover{background:rgba(201,168,76,.2);}
+    .overlay-btn.retry{background:rgba(255,68,68,.1);border-color:#ff4444;color:#ff8888;}
+    .overlay-btn.retry:hover{background:rgba(255,68,68,.2);}
+    .overlay-btn.menu{background:transparent;border-color:var(--border);color:var(--text-dim);}
+    .overlay-btn.menu:hover{border-color:var(--text-dim);color:var(--text);}
+    .hint{font-size:10px;color:var(--text-dim);letter-spacing:1px;text-align:center;}
+
+    /* ══ WINDRANGER РЕЖИМ ВЫБОРА НАПРАВЛЕНИЯ ══ */
+    .wr-dir-modal{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:50;display:none;align-items:center;justify-content:center;}
+    .wr-dir-modal.active{display:flex;}
+    .wr-dir-box{background:var(--bg-card);border:1px solid #88ff44;padding:24px;text-align:center;display:flex;flex-direction:column;gap:12px;}
+    .wr-dir-title{font-family:'Cinzel',serif;font-size:13px;color:#88ff44;letter-spacing:3px;}
+    .wr-dir-btns{display:flex;gap:10px;}
+    .wr-dir-btn{padding:10px 20px;background:rgba(100,200,50,.1);border:1px solid #88ff44;color:#88ff44;font-family:'Cinzel',serif;font-size:11px;letter-spacing:2px;cursor:pointer;transition:all .3s;}
+    .wr-dir-btn:hover{background:rgba(100,200,50,.2);}
   </style>
 </head>
 <body>
-
 <div class="grid-bg" id="gridBg"></div>
 <div class="glow-orb left"></div>
 <div class="glow-orb right"></div>
@@ -179,14 +235,14 @@
           <div id="loginMsg" class="message"></div>
           <div class="field"><label>Логин</label><div class="field-wrap"><span class="icon">⚔️</span><input type="text" id="loginUsername" placeholder="Введи логин"></div></div>
           <div class="field"><label>Пароль</label><div class="field-wrap"><span class="icon">🔑</span><input type="password" id="loginPassword" placeholder="Введи пароль"></div></div>
-          <button class="btn" id="loginBtn" onclick="login()"><span>Войти в игру</span></button>
+          <button class="btn" onclick="login()"><span>Войти в игру</span></button>
         </div>
         <div class="form-panel" id="registerForm">
           <div id="registerMsg" class="message"></div>
           <div class="field"><label>Логин</label><div class="field-wrap"><span class="icon">⚔️</span><input type="text" id="regUsername" placeholder="Придумай логин"></div></div>
           <div class="field"><label>Email</label><div class="field-wrap"><span class="icon">📜</span><input type="email" id="regEmail" placeholder="Введи email"></div></div>
           <div class="field"><label>Пароль</label><div class="field-wrap"><span class="icon">🔑</span><input type="password" id="regPassword" placeholder="Придумай пароль"></div></div>
-          <button class="btn" id="registerBtn" onclick="register()"><span>Начать путь</span></button>
+          <button class="btn" onclick="register()"><span>Начать путь</span></button>
         </div>
       </div>
       <div class="card-footer">Tactical Minesweeper <span>×</span> Dota Heroes</div>
@@ -213,20 +269,46 @@
       <div class="stat"><span class="stat-val" id="statMMR">0</span><span class="stat-label">MMR</span></div>
     </div>
     <div class="profile-actions">
-      <button class="btn-play" onclick="showGame()">⚔ Играть</button>
+      <button class="btn-play" onclick="startGame()">⚔ Играть</button>
       <button class="btn-logout" onclick="logout()">Выйти</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ МОДАЛ ПРОКАЧКИ СКИЛЛОВ ══ -->
+<div class="skill-modal-bg" id="skillModal">
+  <div class="skill-modal">
+    <div class="corner tl"></div><div class="corner tr"></div>
+    <div class="corner bl"></div><div class="corner br"></div>
+    <div class="skill-modal-header">
+      <div class="skill-modal-title">⚡ ПРОКАЧКА СКИЛЛОВ — <span id="modalStageName">ЭТАП 1</span></div>
+      <div class="skill-points-badge">Очки прокачки: <span id="modalPoints">0</span></div>
+    </div>
+    <div class="skill-cards" id="skillCards"></div>
+    <div class="skill-modal-footer">
+      <button class="btn-start-stage" onclick="closeSkillModal()">▶ Начать этап</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ МОДАЛ ВЫБОРА НАПРАВЛЕНИЯ ВРКИ ══ -->
+<div class="wr-dir-modal" id="wrDirModal">
+  <div class="wr-dir-box">
+    <div class="wr-dir-title">🏹 POWER SHOT — ВЫБЕРИ НАПРАВЛЕНИЕ</div>
+    <div class="wr-dir-btns">
+      <button class="wr-dir-btn" onclick="setWrDir('h')">→ Горизонталь (строка)</button>
+      <button class="wr-dir-btn" onclick="setWrDir('v')">↓ Вертикаль (столбец)</button>
     </div>
   </div>
 </div>
 
 <!-- ══ ЭКРАН ИГРЫ ══ -->
 <div class="screen" id="gameScreen">
-
   <div class="game-header">
     <div class="game-title">💣 САПЁР × ДОТА</div>
     <div class="game-hud">
       <div class="hud-item"><span class="hud-val" id="hudMines">0</span><span class="hud-label">Мины</span></div>
-      <div class="hud-item"><span class="hud-timer" id="hudTimer">0</span><span class="hud-label">Секунды</span></div>
+      <div class="hud-item"><span class="hud-timer" id="hudTimer">0</span><span class="hud-label">Сек</span></div>
       <div class="hud-item"><span class="hud-val" id="hudFlags">0</span><span class="hud-label">Флаги</span></div>
     </div>
     <button class="btn-back" onclick="showProfile()">← Профиль</button>
@@ -238,432 +320,842 @@
     <div class="stage-item" id="stage3">Этап 3 — 50×20</div>
   </div>
 
-  <div class="board-wrap" id="boardWrap">
-    <div class="board" id="board"></div>
+  <!-- Панель скиллов -->
+  <div class="skill-bar" id="skillBar">
+    <!-- Q — Crystal Maiden -->
+    <div class="skill-slot disabled" id="slotQ" onclick="activateSkill('Q')" title="Q — Морозная зона CM">
+      <span class="skill-slot-icon">❄️</span>
+      <span class="skill-slot-key">Q</span>
+      <span class="skill-slot-name">CM Frost</span>
+      <span class="skill-slot-uses" id="usesQ">—</span>
+      <span class="skill-slot-lvl" id="lvlQ">Не изучен</span>
+    </div>
+    <!-- W — Windranger -->
+    <div class="skill-slot disabled" id="slotW" onclick="activateSkill('W')" title="W — Power Shot WR">
+      <span class="skill-slot-icon">🏹</span>
+      <span class="skill-slot-key">W</span>
+      <span class="skill-slot-name">WR Shot</span>
+      <span class="skill-slot-uses" id="usesW">—</span>
+      <span class="skill-slot-lvl" id="lvlW">Не изучен</span>
+    </div>
+    <!-- E — Templar Assassin -->
+    <div class="skill-slot disabled" id="slotE" onclick="activateSkill('E')" title="E — Щит TA">
+      <span class="skill-slot-icon">🛡️</span>
+      <span class="skill-slot-key">E</span>
+      <span class="skill-slot-name">TA Shield</span>
+      <span class="skill-slot-uses" id="usesE">—</span>
+      <span class="skill-slot-lvl" id="lvlE">Не изучен</span>
+      <span class="shield-timer" id="shieldTimer">15</span>
+    </div>
+    <div class="skill-bar-points">⚡ <span id="hudPoints">0</span> очков</div>
   </div>
 
-  <p class="hint">ЛКМ — открыть &nbsp;|&nbsp; ПКМ — флаг 🚩 &nbsp;|&nbsp; ЛКМ по цифре — открыть соседей &nbsp;|&nbsp; ПКМ по цифре — поставить флаги</p>
+  <div class="board-area" id="boardArea">
+    <div id="boardWrapper">
+      <!-- Метки столбцов и строк рендерятся динамически -->
+    </div>
+  </div>
 
+  <p class="hint">ЛКМ — открыть | ПКМ — флаг 🚩 | ЛКМ/ПКМ по цифре — авто | Q/W/E — скиллы</p>
 </div>
 
 <script>
-// ══════════════════════════════════════
+// ════════════════════════════════════════
 //  НАВИГАЦИЯ
-// ══════════════════════════════════════
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+// ════════════════════════════════════════
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }
+function showProfile(){showScreen('profileScreen');stopTimer();}
 
-function showProfile() { showScreen('profileScreen'); stopTimer(); }
-function showGame()    { showScreen('gameScreen'); startStage(currentStage); }
-
-// ══════════════════════════════════════
-//  АВТОРИЗАЦИЯ
-// ══════════════════════════════════════
-function switchTab(tab) {
-  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active',(i===0&&tab==='login')||(i===1&&tab==='register')));
-  document.getElementById('loginForm').classList.toggle('active', tab==='login');
-  document.getElementById('registerForm').classList.toggle('active', tab==='register');
+// ════════════════════════════════════════
+//  AUTH
+// ════════════════════════════════════════
+function switchTab(tab){
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',(i===0&&tab==='login')||(i===1&&tab==='register')));
+  document.getElementById('loginForm').classList.toggle('active',tab==='login');
+  document.getElementById('registerForm').classList.toggle('active',tab==='register');
   clearMessages();
 }
-function clearMessages() {
-  ['loginMsg','registerMsg'].forEach(id => { const e=document.getElementById(id); e.className='message'; e.textContent=''; });
+function clearMessages(){
+  ['loginMsg','registerMsg'].forEach(id=>{const e=document.getElementById(id);e.className='message';e.textContent='';});
 }
-function showMsg(id,text,type) { const e=document.getElementById(id); e.textContent=text; e.className=`message ${type}`; }
+function showMsg(id,text,type){const e=document.getElementById(id);e.textContent=text;e.className=`message ${type}`;}
 
-async function login() {
-  const username = document.getElementById('loginUsername').value.trim();
-  const password = document.getElementById('loginPassword').value;
-  if (!username||!password) return showMsg('loginMsg','Заполни все поля','error');
-  try {
-    const res = await fetch('/api/users/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password})});
-    const data = await res.json();
-    if (!res.ok) return showMsg('loginMsg',data.error||'Ошибка','error');
+async function login(){
+  const username=document.getElementById('loginUsername').value.trim();
+  const password=document.getElementById('loginPassword').value;
+  if(!username||!password)return showMsg('loginMsg','Заполни все поля','error');
+  try{
+    const res=await fetch('/api/users/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password})});
+    const data=await res.json();
+    if(!res.ok)return showMsg('loginMsg',data.error||'Ошибка','error');
     showMsg('loginMsg','✓ Добро пожаловать!','success');
-    setTimeout(loadProfile, 700);
-  } catch { showMsg('loginMsg','Сервер недоступен','error'); }
+    setTimeout(loadProfile,700);
+  }catch{showMsg('loginMsg','Сервер недоступен','error');}
 }
-
-async function register() {
-  const username = document.getElementById('regUsername').value.trim();
-  const email    = document.getElementById('regEmail').value.trim();
-  const password = document.getElementById('regPassword').value;
-  if (!username||!email||!password) return showMsg('registerMsg','Заполни все поля','error');
-  if (password.length<6) return showMsg('registerMsg','Пароль минимум 6 символов','error');
-  try {
-    const res = await fetch('/api/users/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,email,password})});
-    const data = await res.json();
-    if (!res.ok) return showMsg('registerMsg',data.error||'Ошибка','error');
-    showMsg('registerMsg','✓ Аккаунт создан! Входим...','success');
-    setTimeout(async()=>{ await fetch('/api/users/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password})}); loadProfile(); },1000);
-  } catch { showMsg('registerMsg','Сервер недоступен','error'); }
+async function register(){
+  const username=document.getElementById('regUsername').value.trim();
+  const email=document.getElementById('regEmail').value.trim();
+  const password=document.getElementById('regPassword').value;
+  if(!username||!email||!password)return showMsg('registerMsg','Заполни все поля','error');
+  if(password.length<6)return showMsg('registerMsg','Пароль минимум 6 символов','error');
+  try{
+    const res=await fetch('/api/users/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,email,password})});
+    const data=await res.json();
+    if(!res.ok)return showMsg('registerMsg',data.error||'Ошибка','error');
+    showMsg('registerMsg','✓ Аккаунт создан!','success');
+    setTimeout(async()=>{await fetch('/api/users/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password})});loadProfile();},1000);
+  }catch{showMsg('registerMsg','Сервер недоступен','error');}
 }
-
-async function loadProfile() {
-  try {
-    const res = await fetch('/api/users/me');
-    if (!res.ok) return;
-    const u = await res.json();
-    document.getElementById('profileName').textContent  = u.username;
-    document.getElementById('profileRank').textContent  = `${u.rank_name||'Herald'} • MMR ${u.mmr||0}`;
-    document.getElementById('statWins').textContent     = u.wins||0;
-    document.getElementById('statLosses').textContent   = u.losses||0;
-    document.getElementById('statLevel').textContent    = u.level||1;
-    document.getElementById('statMMR').textContent      = u.mmr||0;
-    currentUser = u;
+async function loadProfile(){
+  try{
+    const res=await fetch('/api/users/me');
+    if(!res.ok)return;
+    const u=await res.json();
+    document.getElementById('profileName').textContent=u.username;
+    document.getElementById('profileRank').textContent=`${u.rank_name||'Herald'} • MMR ${u.mmr||0}`;
+    document.getElementById('statWins').textContent=u.wins||0;
+    document.getElementById('statLosses').textContent=u.losses||0;
+    document.getElementById('statLevel').textContent=u.level||1;
+    document.getElementById('statMMR').textContent=u.mmr||0;
+    currentUser=u;
     showScreen('profileScreen');
-  } catch {}
+  }catch{}
 }
-
-async function logout() {
+async function logout(){
   await fetch('/api/users/logout',{method:'POST'});
-  currentUser = null;
-  showScreen('authScreen');
-  clearMessages();
+  currentUser=null;
+  // Сброс прокачки при выходе
+  skills.Q.level=0;skills.W.level=0;skills.E.level=0;
+  skillPoints=0;stagesDone=[false,false,false];
+  showScreen('authScreen');clearMessages();
 }
 
-// ══════════════════════════════════════
-//  ИГРОВАЯ ЛОГИКА
-// ══════════════════════════════════════
-let currentUser  = null;
-let currentStage = 1;   // 1,2,3
-let board        = [];
-let revealed     = [];
-let flagged      = [];
-let mineCount    = 0;
-let rows = 0, cols = 0;
-let gameOver     = false;
-let firstClick   = true;
-let timerInterval= null;
-let seconds      = 0;
-let stagesDone   = [false,false,false];
+// ════════════════════════════════════════
+//  СИСТЕМА СКИЛЛОВ
+// ════════════════════════════════════════
+let currentUser=null;
+let skillPoints=0;
+let stagesDone=[false,false,false];
 
-const STAGES = [
-  { rows:9,  cols:9,  mines:10 },   // Этап 1
-  { rows:20, cols:20, mines:50 },   // Этап 2
-  { rows:20, cols:50, mines:130},   // Этап 3
-];
+const SKILL_DEFS={
+  Q:{
+    key:'Q',icon:'❄️',name:'CM Frost',hero:'Crystal Maiden',
+    maxLevel:2,
+    desc:['Открывает зону 2×2 вокруг выбранной клетки','Открывает зону 3×3 вокруг выбранной клетки'],
+    usesPerStage:2,
+  },
+  W:{
+    key:'W',icon:'🏹',name:'WR Shot',hero:'Windranger',
+    maxLevel:2,
+    desc:['Стрела летит горизонтально — открывает всю строку','Стрела летит горизонтально или вертикально (на выбор)'],
+    usesPerStage:2,
+  },
+  E:{
+    key:'E',icon:'🛡️',name:'TA Shield',hero:'Templar Assassin',
+    maxLevel:1,
+    desc:['Щит 15 сек: защита от 2 мин. Поле становится фиолетовым'],
+    usesPerStage:1,
+  },
+};
 
-function startStage(stageNum) {
-  currentStage = stageNum;
-  const cfg = STAGES[stageNum-1];
-  rows = cfg.rows; cols = cfg.cols; mineCount = cfg.mines;
+const skills={
+  Q:{level:0,usesLeft:0},
+  W:{level:0,usesLeft:0},
+  E:{level:0,usesLeft:0},
+};
 
-  // Обновить UI этапов
-  for(let i=1;i<=3;i++) {
-    const el = document.getElementById(`stage${i}`);
-    el.className = 'stage-item';
-    if(stagesDone[i-1]) el.classList.add('done');
-    else if(i===stageNum) el.classList.add('active');
+let activeSkill=null; // 'Q','W','E' или null
+let wrDirection=null; // 'h' или 'v'
+let shieldActive=false;
+let shieldHits=0;
+let shieldTimerVal=0;
+let shieldInterval=null;
+
+function startGame(){
+  // При первом старте даём +1 очко
+  skillPoints=1;
+  currentStage=1;
+  stagesDone=[false,false,false];
+  skills.Q={level:0,usesLeft:0};
+  skills.W={level:0,usesLeft:0};
+  skills.E={level:0,usesLeft:0};
+  openSkillModal(1);
+}
+
+function openSkillModal(stageNum){
+  showScreen('gameScreen');
+  document.getElementById('modalStageName').textContent=`ЭТАП ${stageNum}`;
+  document.getElementById('modalPoints').textContent=skillPoints;
+  renderSkillCards();
+  document.getElementById('skillModal').classList.add('active');
+}
+
+function renderSkillCards(){
+  const container=document.getElementById('skillCards');
+  container.innerHTML='';
+  ['Q','W','E'].forEach(key=>{
+    const def=SKILL_DEFS[key];
+    const sk=skills[key];
+    const canUpgrade=skillPoints>0&&sk.level<def.maxLevel;
+    const maxed=sk.level>=def.maxLevel;
+
+    const card=document.createElement('div');
+    card.className=`skill-card${maxed?' maxed':''}${!canUpgrade&&!maxed?' no-points':''}`;
+
+    // Уровень точки
+    let dots='';
+    for(let i=0;i<def.maxLevel;i++){
+      dots+=`<div class="skill-dot${i<sk.level?' filled':''}"></div>`;
+    }
+
+    const descText=sk.level>0?def.desc[sk.level-1]:(def.desc[0]);
+
+    card.innerHTML=`
+      <span class="skill-icon">${def.icon}</span>
+      <div class="skill-name">${def.name}</div>
+      <div class="skill-hero">${def.hero}</div>
+      <div class="skill-desc">${descText}</div>
+      <div class="skill-level-bar">${dots}</div>
+      <div style="font-size:10px;color:var(--text-dim);text-align:center;margin-bottom:6px;">Уровень ${sk.level}/${def.maxLevel}</div>
+      ${!maxed&&canUpgrade?`<button class="skill-upgrade-btn" onclick="upgradeSkill('${key}')">+ Прокачать (${sk.level===0?'изучить':'улучшить'})</button>`:''}
+      ${maxed?`<div style="font-size:10px;color:#27ae60;text-align:center;">✓ Максимальный уровень</div>`:''}
+      ${!canUpgrade&&!maxed&&sk.level===0?`<div style="font-size:10px;color:var(--text-dim);text-align:center;">Нет очков</div>`:''}
+    `;
+    container.appendChild(card);
+  });
+  document.getElementById('modalPoints').textContent=skillPoints;
+}
+
+function upgradeSkill(key){
+  if(skillPoints<=0)return;
+  if(skills[key].level>=SKILL_DEFS[key].maxLevel)return;
+  skills[key].level++;
+  skillPoints--;
+  renderSkillCards();
+}
+
+function closeSkillModal(){
+  document.getElementById('skillModal').classList.remove('active');
+  // Установить uses для этого этапа
+  ['Q','W','E'].forEach(key=>{
+    skills[key].usesLeft=skills[key].level>0?SKILL_DEFS[key].usesPerStage:0;
+  });
+  updateSkillBar();
+  startStage(currentStage);
+}
+
+function updateSkillBar(){
+  ['Q','W','E'].forEach(key=>{
+    const slot=document.getElementById(`slot${key}`);
+    const sk=skills[key];
+    const def=SKILL_DEFS[key];
+    document.getElementById(`uses${key}`).textContent=sk.level>0?`${sk.usesLeft}/${def.usesPerStage} исп.`:'—';
+    document.getElementById(`lvl${key}`).textContent=sk.level>0?`Ур.${sk.level}`:'Не изучен';
+    slot.classList.toggle('disabled',sk.level===0||sk.usesLeft===0);
+  });
+  document.getElementById('hudPoints').textContent=skillPoints;
+}
+
+// ════════════════════════════════════════
+//  АКТИВАЦИЯ СКИЛЛОВ
+// ════════════════════════════════════════
+function activateSkill(key){
+  if(gameOver)return;
+  const sk=skills[key];
+  if(sk.level===0||sk.usesLeft===0)return;
+
+  if(activeSkill===key){
+    // Снять выделение
+    activeSkill=null;
+    document.querySelectorAll('.skill-slot').forEach(s=>s.classList.remove('active-skill'));
+    clearHighlights();
+    return;
   }
 
-  // Обновить CSS переменную размера клетки
-  const size = stageNum===1?44: stageNum===2?28:20;
-  document.documentElement.style.setProperty('--cell-size', size+'px');
-  const wrap = document.getElementById('boardWrap');
-  if(stageNum===3) wrap.classList.add('fullwidth');
-  else wrap.classList.remove('fullwidth');
+  // Особый случай — щит активируется сразу без клика на клетку
+  if(key==='E'){
+    activateShield();
+    return;
+  }
+
+  // W уровень 2 — показать выбор направления
+  if(key==='W'&&skills.W.level>=2){
+    document.getElementById('wrDirModal').classList.add('active');
+    activeSkill='W';
+    return;
+  }
+
+  activeSkill=key;
+  wrDirection=key==='W'?'h':null;
+  document.querySelectorAll('.skill-slot').forEach(s=>s.classList.remove('active-skill'));
+  document.getElementById(`slot${key}`).classList.add('active-skill');
+}
+
+function setWrDir(dir){
+  wrDirection=dir;
+  document.getElementById('wrDirModal').classList.remove('active');
+  document.querySelectorAll('.skill-slot').forEach(s=>s.classList.remove('active-skill'));
+  document.getElementById('slotW').classList.add('active-skill');
+}
+
+function clearHighlights(){
+  document.querySelectorAll('.cell.highlight-row,.cell.highlight-col').forEach(c=>{
+    c.classList.remove('highlight-row','highlight-col');
+  });
+}
+
+// ── CM Frost ──
+function useCM(r,c){
+  const radius=skills.Q.level===1?1:1; // уровень 1 → 2x2 (±1), уровень 2 → 3x3 (±1 тоже но centre)
+  const half=skills.Q.level===1?0:1;   // уровень 1: 2x2 = от r,c до r+1,c+1; уровень 2: 3x3 = ±1
+  
+  let opened=0;
+  if(skills.Q.level===1){
+    // 2x2: r..r+1, c..c+1
+    for(let dr=0;dr<=1;dr++) for(let dc=0;dc<=1;dc++){
+      const nr=r+dr,nc=c+dc;
+      if(nr>=0&&nr<rows&&nc>=0&&nc<cols&&!revealed[nr][nc]&&!flagged[nr][nc]&&board[nr][nc]!==-1){
+        revealed[nr][nc]=true;
+        const cell=getCell(nr,nc);
+        cell.classList.add('open','cm-frozen');
+        if(board[nr][nc]>0){cell.textContent=board[nr][nc];cell.classList.add('n'+board[nr][nc]);}
+        else{// открыть соседей пустой
+          setTimeout(()=>openCell(nr,nc),100);
+        }
+        opened++;
+      }
+    }
+  } else {
+    // 3x3: ±1
+    for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++){
+      const nr=r+dr,nc=c+dc;
+      if(nr>=0&&nr<rows&&nc>=0&&nc<cols&&!revealed[nr][nc]&&!flagged[nr][nc]&&board[nr][nc]!==-1){
+        revealed[nr][nc]=true;
+        const cell=getCell(nr,nc);
+        cell.classList.add('open','cm-frozen');
+        if(board[nr][nc]>0){cell.textContent=board[nr][nc];cell.classList.add('n'+board[nr][nc]);}
+        else{setTimeout(()=>openCell(nr,nc),100);}
+        opened++;
+      }
+    }
+  }
+  skills.Q.usesLeft--;
+  activeSkill=null;
+  document.querySelectorAll('.skill-slot').forEach(s=>s.classList.remove('active-skill'));
+  updateSkillBar();
+  setTimeout(checkWin,200);
+}
+
+// ── Windranger Shot ──
+function useWR(r,c){
+  const dir=wrDirection||'h';
+  if(dir==='h'){
+    // Открыть всю строку r
+    for(let nc=0;nc<cols;nc++){
+      if(!revealed[r][nc]&&!flagged[r][nc]&&board[r][nc]!==-1){
+        revealed[r][nc]=true;
+        const cell=getCell(r,nc);
+        cell.classList.add('open','wr-shot');
+        if(board[r][nc]>0){cell.textContent=board[r][nc];cell.classList.add('n'+board[r][nc]);}
+      }
+    }
+  } else {
+    // Открыть весь столбец c
+    for(let nr=0;nr<rows;nr++){
+      if(!revealed[nr][c]&&!flagged[nr][c]&&board[nr][c]!==-1){
+        revealed[nr][c]=true;
+        const cell=getCell(nr,c);
+        cell.classList.add('open','wr-shot');
+        if(board[nr][c]>0){cell.textContent=board[nr][c];cell.classList.add('n'+board[nr][c]);}
+      }
+    }
+  }
+  skills.W.usesLeft--;
+  activeSkill=null;wrDirection=null;
+  document.querySelectorAll('.skill-slot').forEach(s=>s.classList.remove('active-skill'));
+  updateSkillBar();
+  setTimeout(checkWin,200);
+}
+
+// ── TA Shield ──
+function activateShield(){
+  if(shieldActive)return;
+  shieldActive=true;
+  shieldHits=0;
+  shieldTimerVal=15;
+  skills.E.usesLeft--;
+  activeSkill=null;
+  updateSkillBar();
+
+  const area=document.getElementById('boardArea');
+  area.classList.add('shield-active');
+  document.getElementById('shieldTimer').style.display='block';
+  document.getElementById('shieldTimer').textContent='15';
+
+  shieldInterval=setInterval(()=>{
+    shieldTimerVal--;
+    document.getElementById('shieldTimer').textContent=shieldTimerVal;
+    // Пульсирующие частицы
+    spawnShieldParticles();
+    if(shieldTimerVal<=0) deactivateShield();
+  },1000);
+}
+
+function deactivateShield(){
+  shieldActive=false;
+  clearInterval(shieldInterval);
+  document.getElementById('boardArea').classList.remove('shield-active');
+  document.getElementById('shieldTimer').style.display='none';
+}
+
+function spawnShieldParticles(){
+  const area=document.getElementById('boardArea');
+  const rect=area.getBoundingClientRect();
+  for(let i=0;i<5;i++){
+    const p=document.createElement('div');
+    p.style.cssText=`position:fixed;pointer-events:none;z-index:998;
+      left:${rect.left+Math.random()*rect.width}px;
+      top:${rect.top+Math.random()*rect.height}px;
+      width:4px;height:4px;border-radius:50%;
+      background:#aa44ff;box-shadow:0 0 6px #aa44ff;
+      animation:sparkAnim .8s ease forwards;
+      --sx:${(Math.random()-0.5)*60}px;--sy:${(Math.random()-0.5)*60}px;`;
+    document.body.appendChild(p);
+    setTimeout(()=>p.remove(),800);
+  }
+}
+
+// ════════════════════════════════════════
+//  ЭФФЕКТЫ ВЗРЫВА
+// ════════════════════════════════════════
+function spawnExplosion(cellEl){
+  const rect=cellEl.getBoundingClientRect();
+  const cx=rect.left+rect.width/2;
+  const cy=rect.top+rect.height/2;
+
+  // Основной взрыв
+  const emojis=['💥','🔥','💣'];
+  emojis.forEach((emoji,i)=>{
+    const e=document.createElement('div');
+    e.className='explosion';
+    e.textContent=emoji;
+    e.style.cssText=`left:${cx-20+i*10}px;top:${cy-20}px;animation-delay:${i*0.1}s;`;
+    document.body.appendChild(e);
+    setTimeout(()=>e.remove(),700);
+  });
+
+  // Искры
+  for(let i=0;i<12;i++){
+    const s=document.createElement('div');
+    s.className='spark';
+    const angle=(i/12)*Math.PI*2;
+    const dist=40+Math.random()*40;
+    s.style.cssText=`
+      left:${cx}px;top:${cy}px;
+      background:${['#ff4400','#ff8800','#ffcc00'][Math.floor(Math.random()*3)]};
+      --sx:${Math.cos(angle)*dist}px;--sy:${Math.sin(angle)*dist}px;
+      animation-delay:${Math.random()*0.1}s;`;
+    document.body.appendChild(s);
+    setTimeout(()=>s.remove(),600);
+  }
+}
+
+// ════════════════════════════════════════
+//  ИГРОВАЯ ЛОГИКА
+// ════════════════════════════════════════
+let currentStage=1;
+let board=[],revealed=[],flagged=[];
+let mineCount=0,rows=0,cols=0;
+let gameOver=false,firstClick=true;
+let timerInterval=null,seconds=0;
+
+const STAGES=[
+  {rows:9, cols:9, mines:10},
+  {rows:20,cols:20,mines:50},
+  {rows:20,cols:50,mines:130},
+];
+
+function startStage(stageNum){
+  currentStage=stageNum;
+  const cfg=STAGES[stageNum-1];
+  rows=cfg.rows;cols=cfg.cols;mineCount=cfg.mines;
+
+  for(let i=1;i<=3;i++){
+    const el=document.getElementById(`stage${i}`);
+    el.className='stage-item';
+    if(stagesDone[i-1])el.classList.add('done');
+    else if(i===stageNum)el.classList.add('active');
+  }
+
+  const size=stageNum===1?44:stageNum===2?28:20;
+  document.documentElement.style.setProperty('--cell-size',size+'px');
+
+  const area=document.getElementById('boardArea');
+  area.classList.toggle('fullwidth',stageNum===3);
+  area.classList.remove('shield-active');
 
   initBoard();
   renderBoard();
   stopTimer();
-  seconds = 0;
-  document.getElementById('hudTimer').textContent = '0';
-  document.getElementById('hudMines').textContent = mineCount;
-  document.getElementById('hudFlags').textContent = '0';
-  gameOver   = false;
-  firstClick = true;
+  seconds=0;
+  document.getElementById('hudTimer').textContent='0';
+  document.getElementById('hudMines').textContent=mineCount;
+  document.getElementById('hudFlags').textContent='0';
+  gameOver=false;firstClick=true;
+  shieldActive=false;shieldHits=0;
+  clearInterval(shieldInterval);
+  document.getElementById('shieldTimer').style.display='none';
 
-  // Убрать старый оверлей
-  const old = document.getElementById('gameOverlay');
-  if(old) old.remove();
+  const old=document.getElementById('gameOverlay');
+  if(old)old.remove();
+
+  updateSkillBar();
 }
 
-function initBoard() {
-  board    = Array.from({length:rows},()=>Array(cols).fill(0));
-  revealed = Array.from({length:rows},()=>Array(cols).fill(false));
-  flagged  = Array.from({length:rows},()=>Array(cols).fill(false));
+function initBoard(){
+  board=Array.from({length:rows},()=>Array(cols).fill(0));
+  revealed=Array.from({length:rows},()=>Array(cols).fill(false));
+  flagged=Array.from({length:rows},()=>Array(cols).fill(false));
 }
 
-function placeMines(safeR, safeC) {
-  let placed = 0;
-  while(placed < mineCount) {
-    const r = Math.floor(Math.random()*rows);
-    const c = Math.floor(Math.random()*cols);
-    // Не ставить мину рядом с первым кликом (3x3 зона)
-    if(board[r][c]===-1) continue;
-    if(Math.abs(r-safeR)<=1 && Math.abs(c-safeC)<=1) continue;
-    board[r][c] = -1;
-    placed++;
+function placeMines(safeR,safeC){
+  let placed=0;
+  while(placed<mineCount){
+    const r=Math.floor(Math.random()*rows);
+    const c=Math.floor(Math.random()*cols);
+    if(board[r][c]===-1)continue;
+    if(Math.abs(r-safeR)<=1&&Math.abs(c-safeC)<=1)continue;
+    board[r][c]=-1;placed++;
   }
-  // Посчитать цифры
-  for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) {
-    if(board[r][c]===-1) continue;
+  for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
+    if(board[r][c]===-1)continue;
     let cnt=0;
-    for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++) {
-      const nr=r+dr, nc=c+dc;
-      if(nr>=0&&nr<rows&&nc>=0&&nc<cols&&board[nr][nc]===-1) cnt++;
+    for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){
+      const nr=r+dr,nc=c+dc;
+      if(nr>=0&&nr<rows&&nc>=0&&nc<cols&&board[nr][nc]===-1)cnt++;
     }
     board[r][c]=cnt;
   }
 }
 
-function renderBoard() {
-  const b = document.getElementById('board');
-  b.style.gridTemplateColumns = `repeat(${cols}, var(--cell-size))`;
-  b.innerHTML='';
-  for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) {
-    const cell = document.createElement('div');
-    cell.className='cell';
-    cell.dataset.r=r; cell.dataset.c=c;
-    cell.addEventListener('click',  onLeftClick);
-    cell.addEventListener('contextmenu', onRightClick);
-    b.appendChild(cell);
+// ── РЕНДЕР ПОЛЯ С КООРДИНАТАМИ ──
+function renderBoard(){
+  const wrapper=document.getElementById('boardWrapper');
+  wrapper.innerHTML='';
+
+  const cellSize=parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cell-size'));
+
+  // Метки столбцов (буквы A,B,C...)
+  const colLabelsRow=document.createElement('div');
+  colLabelsRow.style.cssText=`display:flex;padding-left:24px;`;
+  for(let c=0;c<cols;c++){
+    const lbl=document.createElement('div');
+    lbl.style.cssText=`width:${cellSize}px;text-align:center;font-size:9px;color:#5a7090;font-family:'Rajdhani',sans-serif;font-weight:600;`;
+    lbl.textContent=String.fromCharCode(65+c%26)+(c>=26?Math.floor(c/26):'');
+    colLabelsRow.appendChild(lbl);
   }
+  wrapper.appendChild(colLabelsRow);
+
+  // Строки с метками
+  const boardEl=document.createElement('div');
+  boardEl.id='board';
+  boardEl.style.cssText=`display:flex;flex-direction:column;gap:1px;`;
+
+  for(let r=0;r<rows;r++){
+    const rowEl=document.createElement('div');
+    rowEl.style.cssText=`display:flex;align-items:center;gap:1px;`;
+
+    // Метка строки (цифра)
+    const rowLbl=document.createElement('div');
+    rowLbl.style.cssText=`width:22px;text-align:right;padding-right:2px;font-size:9px;color:#5a7090;font-family:'Rajdhani',sans-serif;font-weight:600;flex-shrink:0;`;
+    rowLbl.textContent=r+1;
+    rowEl.appendChild(rowLbl);
+
+    for(let c=0;c<cols;c++){
+      const cell=document.createElement('div');
+      cell.className='cell';
+      cell.dataset.r=r;cell.dataset.c=c;
+      cell.style.cssText=`width:${cellSize}px;height:${cellSize}px;`;
+      cell.addEventListener('click',onLeftClick);
+      cell.addEventListener('contextmenu',onRightClick);
+      cell.addEventListener('mouseover',onCellHover);
+      cell.addEventListener('mouseout',onCellOut);
+      rowEl.appendChild(cell);
+    }
+    boardEl.appendChild(rowEl);
+  }
+  wrapper.appendChild(boardEl);
 }
 
-function getCell(r,c) {
+function getCell(r,c){
   return document.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);
 }
 
-function onLeftClick(e) {
-  if(gameOver) return;
-  const r=+e.target.dataset.r, c=+e.target.dataset.c;
-  if(flagged[r][c]) return;
-
-  if(firstClick) {
-    firstClick=false;
-    placeMines(r,c);
-    startTimer();
-  }
-
-  // Если клетка уже открыта и это цифра — открыть соседей (chord)
-  if(revealed[r][c] && board[r][c]>0) {
-    chordOpen(r,c);
-    checkWin();
-    return;
-  }
-
-  if(!revealed[r][c]) {
-    openCell(r,c);
-    checkWin();
+// ── ХОВЕР ДЛЯ ВРКИ ──
+function onCellHover(e){
+  if(activeSkill!=='W')return;
+  clearHighlights();
+  const r=+e.target.dataset.r,c=+e.target.dataset.c;
+  const dir=wrDirection||'h';
+  if(dir==='h'){
+    for(let nc=0;nc<cols;nc++) getCell(r,nc)?.classList.add('highlight-row');
+  } else {
+    for(let nr=0;nr<rows;nr++) getCell(nr,c)?.classList.add('highlight-col');
   }
 }
+function onCellOut(){clearHighlights();}
 
-function onRightClick(e) {
+// ── КЛИКИ ──
+function onLeftClick(e){
+  if(gameOver)return;
+  const r=+e.target.dataset.r,c=+e.target.dataset.c;
+
+  // Если активен скилл
+  if(activeSkill==='Q'){useCM(r,c);return;}
+  if(activeSkill==='W'){clearHighlights();useWR(r,c);return;}
+
+  if(flagged[r][c])return;
+
+  if(firstClick){firstClick=false;placeMines(r,c);startTimer();}
+
+  // Клик по открытой цифре — chord
+  if(revealed[r][c]&&board[r][c]>0){chordOpen(r,c);checkWin();return;}
+  if(!revealed[r][c]){openCell(r,c);checkWin();}
+}
+
+function onRightClick(e){
   e.preventDefault();
-  if(gameOver) return;
-  const r=+e.target.dataset.r, c=+e.target.dataset.c;
+  if(gameOver)return;
+  const r=+e.target.dataset.r,c=+e.target.dataset.c;
 
-  // Если клетка уже открыта и это цифра — поставить флаги на соседей (chord flag)
-  if(revealed[r][c] && board[r][c]>0) {
-    chordFlag(r,c);
-    return;
-  }
+  if(activeSkill==='Q'){useCM(r,c);return;}
+  if(activeSkill==='W'){clearHighlights();useWR(r,c);return;}
 
-  if(revealed[r][c]) return;
-  flagged[r][c] = !flagged[r][c];
-  const cell = getCell(r,c);
-  cell.textContent = flagged[r][c]?'🚩':'';
-  cell.classList.toggle('flagged', flagged[r][c]);
-  const flags = flagged.flat().filter(Boolean).length;
-  document.getElementById('hudFlags').textContent = flags;
+  if(revealed[r][c]&&board[r][c]>0){chordFlag(r,c);return;}
+  if(revealed[r][c])return;
+
+  flagged[r][c]=!flagged[r][c];
+  const cell=getCell(r,c);
+  cell.textContent=flagged[r][c]?'🚩':'';
+  cell.classList.toggle('flagged',flagged[r][c]);
+  document.getElementById('hudFlags').textContent=flagged.flat().filter(Boolean).length;
 }
 
-// Открыть всех соседей цифры (если флагов вокруг столько же сколько цифра)
-function chordOpen(r,c) {
-  const num = board[r][c];
-  let flagCount = 0;
-  const neighbors = [];
-  for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++) {
-    if(dr===0&&dc===0) continue;
-    const nr=r+dr, nc=c+dc;
-    if(nr<0||nr>=rows||nc<0||nc>=cols) continue;
-    if(flagged[nr][nc]) flagCount++;
-    else if(!revealed[nr][nc]) neighbors.push([nr,nc]);
-  }
-  if(flagCount===num) {
-    neighbors.forEach(([nr,nc])=>openCell(nr,nc));
-  }
-}
-
-// Поставить флаги на всех закрытых соседей цифры (если их столько же сколько цифра)
-function chordFlag(r,c) {
-  const num = board[r][c];
-  const closed = [];
-  for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++) {
-    if(dr===0&&dc===0) continue;
-    const nr=r+dr, nc=c+dc;
-    if(nr<0||nr>=rows||nc<0||nc>=cols) continue;
-    if(!revealed[nr][nc]&&!flagged[nr][nc]) closed.push([nr,nc]);
-  }
-  if(closed.length===num) {
-    closed.forEach(([nr,nc])=>{
-      flagged[nr][nc]=true;
-      const cell=getCell(nr,nc);
-      cell.textContent='🚩';
-      cell.classList.add('flagged');
-    });
-    const flags=flagged.flat().filter(Boolean).length;
-    document.getElementById('hudFlags').textContent=flags;
-  }
-}
-
-function openCell(r,c) {
-  if(r<0||r>=rows||c<0||c>=cols) return;
-  if(revealed[r][c]||flagged[r][c]) return;
+function openCell(r,c){
+  if(r<0||r>=rows||c<0||c>=cols)return;
+  if(revealed[r][c]||flagged[r][c])return;
   revealed[r][c]=true;
-  const cell = getCell(r,c);
+  const cell=getCell(r,c);
   cell.classList.add('open','reveal-anim');
 
-  if(board[r][c]===-1) {
-    // МИНА!
+  if(board[r][c]===-1){
+    // МИНА
     cell.textContent='💣';
+    spawnExplosion(cell);
+
+    if(shieldActive&&shieldHits<2){
+      // Щит поглощает
+      shieldHits++;
+      cell.classList.add('shield-hit');
+      cell.classList.remove('open');
+      revealed[r][c]=false; // считаем как не открытую
+      flagged[r][c]=true;
+      cell.textContent='🛡️';
+      if(shieldHits>=2)deactivateShield();
+      return;
+    }
+
     cell.classList.add('exploded');
-    stopTimer();
-    gameOver=true;
-    setTimeout(()=>revealAllMines(), 300);
-    setTimeout(()=>showOverlay('lose'), 800);
+    stopTimer();gameOver=true;
+    setTimeout(()=>revealAllMines(),300);
+    setTimeout(()=>showOverlay('lose'),900);
     return;
   }
-  if(board[r][c]>0) {
+  if(board[r][c]>0){
     cell.textContent=board[r][c];
     cell.classList.add('n'+board[r][c]);
   } else {
-    // Пустая — открыть соседей
-    for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++) openCell(r+dr,c+dc);
+    for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++)openCell(r+dr,c+dc);
   }
 }
 
-function revealAllMines() {
-  for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) {
-    if(board[r][c]===-1 && !revealed[r][c]) {
+function revealAllMines(){
+  for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
+    if(board[r][c]===-1&&!revealed[r][c]){
       const cell=getCell(r,c);
-      cell.textContent='💣';
-      cell.classList.add('open');
+      cell.textContent='💣';cell.classList.add('open');
     }
   }
 }
 
-function checkWin() {
-  if(gameOver) return;
-  let unopened=0;
-  for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) if(!revealed[r][c]) unopened++;
-  if(unopened===mineCount) {
-    stopTimer();
-    gameOver=true;
-    stagesDone[currentStage-1]=true;
-    setTimeout(()=>showOverlay('win'), 400);
+function chordOpen(r,c){
+  const num=board[r][c];
+  let flagCount=0;const neighbors=[];
+  for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){
+    if(dr===0&&dc===0)continue;
+    const nr=r+dr,nc=c+dc;
+    if(nr<0||nr>=rows||nc<0||nc>=cols)continue;
+    if(flagged[nr][nc])flagCount++;
+    else if(!revealed[nr][nc])neighbors.push([nr,nc]);
+  }
+  if(flagCount===num)neighbors.forEach(([nr,nc])=>openCell(nr,nc));
+}
+
+function chordFlag(r,c){
+  const num=board[r][c];
+  const closed=[];let alreadyFlagged=0;
+  for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){
+    if(dr===0&&dc===0)continue;
+    const nr=r+dr,nc=c+dc;
+    if(nr<0||nr>=rows||nc<0||nc>=cols)continue;
+    if(flagged[nr][nc])alreadyFlagged++;
+    else if(!revealed[nr][nc])closed.push([nr,nc]);
+  }
+  const need=num-alreadyFlagged;
+  if(need>0&&closed.length===need){
+    closed.forEach(([nr,nc])=>{
+      flagged[nr][nc]=true;
+      const cell=getCell(nr,nc);
+      cell.textContent='🚩';cell.classList.add('flagged');
+    });
+    document.getElementById('hudFlags').textContent=flagged.flat().filter(Boolean).length;
   }
 }
 
-function showOverlay(type) {
-  const wrap = document.getElementById('boardWrap');
-  const old  = document.getElementById('gameOverlay');
-  if(old) old.remove();
+function checkWin(){
+  if(gameOver)return;
+  let unopened=0;
+  for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)if(!revealed[r][c])unopened++;
+  if(unopened===mineCount){
+    stopTimer();gameOver=true;
+    stagesDone[currentStage-1]=true;
 
-  const div = document.createElement('div');
-  div.className='game-overlay'; div.id='gameOverlay';
+    // Выдать очко после этапа 1 и 2
+    if(currentStage===1||currentStage===2){
+      skillPoints++;
+      document.getElementById('hudPoints').textContent=skillPoints;
+    }
 
-  const allDone = stagesDone[0]&&stagesDone[1]&&stagesDone[2];
+    setTimeout(()=>showOverlay('win'),400);
+  }
+}
 
-  if(type==='win') {
-    if(allDone) {
-      // Все 3 этапа пройдены — переход на следующий уровень
+function showOverlay(type){
+  const area=document.getElementById('boardArea');
+  const old=document.getElementById('gameOverlay');if(old)old.remove();
+  const div=document.createElement('div');
+  div.className='game-overlay';div.id='gameOverlay';
+
+  const allDone=stagesDone[0]&&stagesDone[1]&&stagesDone[2];
+
+  if(type==='win'){
+    if(allDone){
       updateStats(true);
       div.innerHTML=`
-        <div class="stars">⭐⭐⭐</div>
+        <div style="font-size:40px;letter-spacing:8px;">⭐⭐⭐</div>
         <div class="overlay-title win">УРОВЕНЬ ПРОЙДЕН!</div>
-        <div class="overlay-sub">Все 3 этапа завершены • Уровень повышен</div>
+        <div class="overlay-sub">Прокачка сохранена • MMR +25</div>
         <div class="overlay-btns">
-          <button class="overlay-btn next" onclick="nextLevel()">▶ Следующий уровень</button>
+          <button class="overlay-btn next" onclick="nextLevel()">▶ Ещё раз</button>
           <button class="overlay-btn menu" onclick="showProfile()">Профиль</button>
         </div>`;
-    } else if(currentStage<3) {
+    } else if(currentStage<3){
       div.innerHTML=`
         <div class="overlay-title win">ЭТАП ${currentStage} ПРОЙДЕН!</div>
-        <div class="overlay-sub">Время: ${seconds}с • Переход к следующему этапу</div>
+        <div class="overlay-sub">+1 очко прокачки • Этап ${currentStage+1}</div>
         <div class="overlay-btns">
-          <button class="overlay-btn next" onclick="startStage(${currentStage+1})">▶ Этап ${currentStage+1}</button>
+          <button class="overlay-btn next" onclick="goNextStage()">▶ Прокачка → Этап ${currentStage+1}</button>
           <button class="overlay-btn menu" onclick="showProfile()">Профиль</button>
         </div>`;
     }
   } else {
     updateStats(false);
+    // Сброс прокачки при поражении
+    skills.Q.level=0;skills.W.level=0;skills.E.level=0;skillPoints=0;
     div.innerHTML=`
       <div class="overlay-title lose">💥 ПОДРЫВ!</div>
-      <div class="overlay-sub">Этап ${currentStage} • Время: ${seconds}с</div>
+      <div class="overlay-sub">Прокачка сброшена • Начни заново</div>
       <div class="overlay-btns">
-        <button class="overlay-btn retry" onclick="startStage(${currentStage})">↺ Заново</button>
-        <button class="overlay-btn retry" onclick="startStage(1)">↺ С этапа 1</button>
+        <button class="overlay-btn retry" onclick="startGame()">↺ Начать заново</button>
         <button class="overlay-btn menu" onclick="showProfile()">Профиль</button>
       </div>`;
   }
 
-  wrap.style.position='relative';
+  area.style.position='relative';
   div.style.position='absolute';
-  wrap.appendChild(div);
+  area.appendChild(div);
 }
 
-function nextLevel() {
+function goNextStage(){
+  const next=currentStage+1;
+  // Сбросить overlay
+  const old=document.getElementById('gameOverlay');if(old)old.remove();
+  // Открыть окно прокачки перед следующим этапом
+  openSkillModal(next);
+}
+
+function nextLevel(){
   stagesDone=[false,false,false];
-  startStage(1);
+  startGame();
 }
 
-// ══════════════════════════════════════
-//  СТАТИСТИКА
-// ══════════════════════════════════════
-async function updateStats(win) {
-  try {
-    await fetch('/api/users/update-stats',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({win})
-    });
-    await loadProfileSilent();
-  } catch {}
+async function updateStats(win){
+  try{
+    await fetch('/api/users/update-stats',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({win})});
+    const res=await fetch('/api/users/me');
+    if(!res.ok)return;
+    const u=await res.json();
+    document.getElementById('statWins').textContent=u.wins||0;
+    document.getElementById('statLosses').textContent=u.losses||0;
+    document.getElementById('statMMR').textContent=u.mmr||0;
+    document.getElementById('profileRank').textContent=`${u.rank_name||'Herald'} • MMR ${u.mmr||0}`;
+  }catch{}
 }
 
-async function loadProfileSilent() {
-  try {
-    const res = await fetch('/api/users/me');
-    if(!res.ok) return;
-    const u = await res.json();
-    document.getElementById('statWins').textContent   = u.wins||0;
-    document.getElementById('statLosses').textContent = u.losses||0;
-    document.getElementById('statLevel').textContent  = u.level||1;
-    document.getElementById('statMMR').textContent    = u.mmr||0;
-    document.getElementById('profileRank').textContent= `${u.rank_name||'Herald'} • MMR ${u.mmr||0}`;
-  } catch {}
-}
-
-// ══════════════════════════════════════
+// ════════════════════════════════════════
 //  ТАЙМЕР
-// ══════════════════════════════════════
-function startTimer() {
+// ════════════════════════════════════════
+function startTimer(){
   seconds=0;
-  timerInterval=setInterval(()=>{
-    seconds++;
-    document.getElementById('hudTimer').textContent=seconds;
-  },1000);
+  timerInterval=setInterval(()=>{seconds++;document.getElementById('hudTimer').textContent=seconds;},1000);
 }
-function stopTimer() { clearInterval(timerInterval); timerInterval=null; }
+function stopTimer(){clearInterval(timerInterval);timerInterval=null;}
 
-// ══════════════════════════════════════
+// ════════════════════════════════════════
+//  КЛАВИАТУРА
+// ════════════════════════════════════════
+document.addEventListener('keydown',e=>{
+  const k=e.key.toUpperCase();
+  if(['Q','W','E'].includes(k)&&document.getElementById('gameScreen').classList.contains('active')){
+    activateSkill(k);return;
+  }
+  if(e.key==='Enter'){
+    if(document.getElementById('loginForm').classList.contains('active'))login();
+    else if(document.getElementById('registerForm').classList.contains('active'))register();
+  }
+  if(e.key==='Escape'){
+    activeSkill=null;wrDirection=null;
+    document.querySelectorAll('.skill-slot').forEach(s=>s.classList.remove('active-skill'));
+    clearHighlights();
+    document.getElementById('wrDirModal').classList.remove('active');
+  }
+});
+
+// ════════════════════════════════════════
 //  ФОН
-// ══════════════════════════════════════
+// ════════════════════════════════════════
 const g=document.getElementById('gridBg');
 for(let i=0;i<28*18;i++){const c=document.createElement('div');c.className='grid-cell';g.appendChild(c);}
 
-// Клавиши Enter
-document.addEventListener('keydown',e=>{
-  if(e.key!=='Enter') return;
-  if(document.getElementById('loginForm').classList.contains('active')) login();
-  else register();
-});
+// Стиль для reveal-anim
+const style=document.createElement('style');
+style.textContent=`.cell.reveal-anim{animation:revealCell .2s ease;}@keyframes revealCell{0%{transform:scale(.8);opacity:.5}100%{transform:scale(1);opacity:1}}`;
+document.head.appendChild(style);
 
-// Проверка сессии при загрузке
+// Проверка сессии
 loadProfile();
 </script>
 </body>
